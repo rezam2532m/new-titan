@@ -12,8 +12,19 @@ from . import config, db, state, xray
 
 log = logging.getLogger("titan.tasks")
 
-# cached Cloudflare colo for the location widget
+# Cached Cloudflare colo for the location widget. It is deliberately kept
+# separate from the process's authoritative node location below.
 LOCATION: dict = {"colo": "?"}
+NODE_LOCATION: dict = {}
+EDGE_FALLBACK_LOCATION: dict = {}
+
+
+def _clear_node_location() -> None:
+    """Do not expose a location left behind by an older edge-based refresh."""
+    NODE_LOCATION.clear()
+    EDGE_FALLBACK_LOCATION.clear()
+    db.set_local_node_location("", "", "", "🌐")
+
 
 # usage deltas waiting to be reported back to the main panel (node role)
 _pending_usage: dict[str, dict] = {}
@@ -132,10 +143,20 @@ async def _keep_alive():
 
 
 async def _refresh_location():
-    """Resolve Cloudflare edge colo once at startup and every 12h.
-    Also keeps the local node's city/country/flag in sync."""
-    from .colo_map import describe_colo
+    """Refresh the edge colo and keep the local node's true region in sync.
 
+    Cloudflare's ``colo`` remains useful for the edge-location widget and the
+    panel-targeted subscription place label, but it describes the request's
+    edge, not necessarily the node. Node identity/serialization therefore use
+    only ``NODE_LOCATION``: a Railway replica region or this process's public
+    egress-IP GeoIP result. Never use the public panel domain or edge colo as
+    the node's Auto Detect result.
+    """
+    from .colo_map import describe_colo
+    from .geo import detect_egress_location, railway_location
+
+    _clear_node_location()
+    railway_region_configured = bool(os.environ.get("RAILWAY_REPLICA_REGION", "").strip())
     while True:
         try:
             async with httpx.AsyncClient(timeout=4) as client:
@@ -144,13 +165,45 @@ async def _refresh_location():
                     if line.startswith("colo="):
                         LOCATION["colo"] = line.split("=", 1)[1]
                         break
-            loc = describe_colo(LOCATION.get("colo"))
-            if loc.get("city") and loc.get("city") != "Unknown":
-                db.set_local_node_location(
-                    loc["city"], loc["country"], loc.get("country_code", ""), loc["flag"]
-                )
         except Exception:  # noqa: BLE001
             pass
+
+        # Keep the existing local-panel subscription label useful when the
+        # egress IP cannot be geolocated. This fallback is marked separately
+        # and is never exposed as the node's own detected location.
+        edge_loc = describe_colo(LOCATION.get("colo"))
+        EDGE_FALLBACK_LOCATION.clear()
+        if edge_loc.get("country_code"):
+            EDGE_FALLBACK_LOCATION.update(edge_loc)
+            db.set_local_node_location(
+                edge_loc.get("city", ""), edge_loc.get("country", ""),
+                edge_loc.get("country_code", ""), edge_loc.get("flag", "🌐")
+            )
+        else:
+            db.set_local_node_location("", "", "", "🌐")
+
+        try:
+            railway_loc = railway_location()
+            if railway_region_configured:
+                # Unknown Railway regions stay unknown; never substitute the edge
+                # or public-domain IP location.
+                local_loc = railway_loc if railway_loc.get("known") else {}
+            else:
+                # For generic VPS/container hosts, GeoIP the process's own
+                # outbound address rather than the public domain behind a CDN.
+                NODE_LOCATION.clear()
+                local_loc = await asyncio.to_thread(detect_egress_location)
+            if local_loc and (local_loc.get("city") or local_loc.get("country")):
+                NODE_LOCATION.clear()
+                NODE_LOCATION.update(local_loc)
+                db.set_local_node_location(
+                    local_loc.get("city", ""), local_loc.get("country", ""),
+                    local_loc.get("country_code", ""), local_loc.get("flag", "🌐")
+                )
+            elif railway_region_configured:
+                NODE_LOCATION.clear()
+        except Exception:  # noqa: BLE001
+            NODE_LOCATION.clear()
         await asyncio.sleep(12 * 3600)
 
 
@@ -217,6 +270,10 @@ async def _enrich_node_locations():
 
 
 def start_background_tasks(app):
+    # Run this synchronously during startup so identity endpoints cannot expose
+    # a persisted Cloudflare-edge location before the refresh coroutine begins.
+    _clear_node_location()
+    LOCATION["colo"] = "?"
     tasks = [
         asyncio.create_task(_periodic_flush()),
         asyncio.create_task(_housekeeping()),

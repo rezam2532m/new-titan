@@ -256,7 +256,12 @@ def test_every_config_row_carries_a_flag_and_the_name_of_its_place(panel):
     assert node_place == {"place": "Dubai-Edge", "city": "Dubai",
                           "country_code": "ae", "flag": "🇦🇪"}
     local_place = _entry_place({"target": "panel"})
-    assert local_place["country_code"] and local_place["place"]
+    assert local_place["place"]
+    # Some hosts expose neither a recognized Railway region nor an egress GeoIP
+    # result in a test/offline environment. Unknown is preferable to showing the
+    # Cloudflare edge as the node's country.
+    if not local_place["country_code"]:
+        assert local_place["flag"] in ("🌐", "🏳️")
 
     uid, _ = _user(panel, "flagcity")
     sub = _link(panel, [uid])

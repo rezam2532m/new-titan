@@ -46,7 +46,7 @@ from . import routing
 from . import tasks as bg
 from . import wg
 from .colo_map import describe_colo
-from .geo import detect_location, flag_from_code
+from .geo import detect_location, flag_for_location, flag_from_code
 from .links import build_links, subscription_text, volume_text
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -906,6 +906,22 @@ async def _node_status(node: dict) -> dict:
 def _serialize_node(node: dict, status: dict) -> dict:
     out = dict(node)
     out.pop("token", None)  # never expose a node credential to the frontend
+    if node.get("is_local"):
+        # The local DB row may carry an edge-only fallback for panel-targeted
+        # subscription links. Dashboard node cards use the authoritative identity.
+        local_identity = nodesync.identity()
+        for field in ("city", "country", "country_code", "flag"):
+            out[field] = local_identity.get(field) or ("🌐" if field == "flag" else "")
+    # Do not trust a stale flag emoji when a country code/location is available:
+    # the flag shown by every dashboard view must describe this node's location.
+    code, flag = flag_for_location(
+        out.get("country_code") or "",
+        out.get("country") or "",
+        out.get("city") or "",
+        out.get("flag") or "",
+    )
+    out["country_code"] = code
+    out["flag"] = flag
     out["status"] = status
     out["version"] = APP_VERSION if node.get("is_local") else None
     if not node.get("is_local"):
@@ -2091,7 +2107,8 @@ async def api_create_node(request: Request, _: str = Depends(_require_auth)):
     # No name yet? The domain can supply one (see the detection block below) —
     # asking for both is what made adding a node feel like manual work.
     address = _normalize_node_address(payload.get("address") or "")
-    cc = (payload.get("country_code") or "").strip()[:2].upper()
+    raw_cc = str(payload.get("country_code") or "").strip().upper()
+    cc = raw_cc if re.fullmatch(r"[A-Z]{2}", raw_cc) else ""
     city = (payload.get("city") or "").strip()[:64]
     country = (payload.get("country") or "").strip()[:64]
     flag = (payload.get("flag") or "").strip()[:8]
@@ -2111,9 +2128,11 @@ async def api_create_node(request: Request, _: str = Depends(_require_auth)):
         flag = flag or (found.get("flag") or "")
         if not name:
             raise HTTPException(400, "name-required")
-    # Auto-detect location from the normalized address when admin hasn't set it manually.
-    # Never overwrite an explicit city/country/country_code/flag provided in the payload.
-    if address and not cc and not flag:
+    # A responding non-TiTaN host may use the resolved domain's GeoIP as a
+    # fallback. A TiTaN probe is authoritative even if its region is unknown,
+    # and an unreachable host stays unknown rather than inheriting an edge IP.
+    # Never overwrite an explicit location provided in the payload.
+    if address and not cc and flag in ("", "🏳️", "🌐") and probe.get("kind") in ("foreign", "skipped"):
         try:
             loc = await asyncio.to_thread(detect_location, address)
         except Exception:
@@ -2123,8 +2142,7 @@ async def api_create_node(request: Request, _: str = Depends(_require_auth)):
             country = country or loc.get("country", "")[:64]
             cc = cc or (loc.get("country_code") or "")[:2].upper()
             flag = flag or loc.get("flag") or _flag_for(cc)
-    if not flag:
-        flag = _flag_for(cc)
+    cc, flag = flag_for_location(cc, country, city, flag)
     # Manual nodes get a per-node token so sync works without a shared
     # TITAN_NODE_SECRET; the token is returned once (never re-serialized).
     token = secrets.token_hex(16)
@@ -2183,21 +2201,39 @@ async def api_update_node(node_id: int, request: Request, _: str = Depends(_requ
     # auto-detect country/flag if an address is given and none is known
     # Never overwrite explicit manual values — only fill missing fields.
     effective_addr = fields.get("address") if "address" in fields else node.get("address")
-    if effective_addr and not fields.get("country_code") and not fields.get("flag") and not node.get("country_code"):
-        # Only auto-detect if neither the payload nor the stored node has a country code.
-        # This prevents overwriting a manual selection on re-edits, but fills on first set.
+    if (effective_addr and not fields.get("country_code")
+            and fields.get("flag") in (None, "", "🏳️", "🌐")
+            and not node.get("country_code")):
+        # Ask a TiTaN node for its own location first. Only a non-TiTaN host
+        # falls back to domain GeoIP; its front-door IP may be an edge/proxy.
         addr_for_geo = fields.get("address") or effective_addr
-        try:
-            loc = await asyncio.to_thread(detect_location, addr_for_geo)
-        except Exception:
-            loc = None
-        if loc:
-            fields.setdefault("city", loc.get("city", "")[:64])
-            fields.setdefault("country", loc.get("country", "")[:64])
-            fields.setdefault("country_code", (loc.get("country_code") or "")[:2].upper())
-            fields.setdefault("flag", loc.get("flag") or _flag_for(fields.get("country_code") or ""))
-    if "country_code" in fields and not fields.get("flag") and not payload.get("flag"):
-        fields["flag"] = _flag_for(fields["country_code"])
+        identity_probe = await _probe_node_identity(addr_for_geo)
+        if identity_probe.get("kind") == "titan":
+            found = _discovery_fields(identity_probe.get("identity") or {})
+            for key in ("city", "country", "country_code", "flag"):
+                if not (fields.get(key) or node.get(key)) and found.get(key):
+                    fields[key] = found[key]
+        elif identity_probe.get("kind") == "foreign":
+            try:
+                loc = await asyncio.to_thread(detect_location, addr_for_geo)
+            except Exception:
+                loc = None
+            if loc:
+                fields.setdefault("city", loc.get("city", "")[:64])
+                fields.setdefault("country", loc.get("country", "")[:64])
+                fields.setdefault("country_code", (loc.get("country_code") or "")[:2].upper())
+                fields.setdefault("flag", loc.get("flag") or _flag_for(fields.get("country_code") or ""))
+    if any(k in fields for k in ("city", "country", "country_code", "flag")):
+        location = {**node, **fields}
+        cc, flag = flag_for_location(
+            location.get("country_code") or "",
+            location.get("country") or "",
+            location.get("city") or "",
+            location.get("flag") or "",
+        )
+        if cc:
+            fields["country_code"] = cc
+        fields["flag"] = flag
     updated = db.update_node(node_id, fields)
     db.add_event("info", "node-update", str(node_id), ip=_client_ip(request))
     if any(k in fields for k in ("address", "enabled")):
@@ -2221,50 +2257,58 @@ async def api_ping_node(node_id: int, _: str = Depends(_require_auth)):
     _node_status_cache.pop(node_id, None)
     db.touch_node(node_id)
     status = await _node_status(node)
-    # "بررسی نود" — auto-fill city/country/country_code/flag from the node's domain
-    # if the stored node is missing them. Normalize to https://host[:port] first,
-    # never overwrite a manually set value.
+    # Fill missing location from the node's own identity first. A domain's
+    # resolved IP may be a CDN/proxy edge and must not override a TiTaN node's
+    # actual Railway replica region. Keep unknown/unreachable nodes unknown.
     addr = (node.get("address") or "").strip()
-    need_geo = addr and (not node.get("country_code") or not node.get("city") or not node.get("flag") or node.get("flag") == "🏳️")
-    if need_geo:
+    if addr:
         norm = _normalize_node_address(addr)
         if norm and norm != addr:
-            # Persist normalized address as well (https://host[:port])
             try:
                 db.update_node(node_id, {"address": norm})
                 node["address"] = norm
                 addr = norm
             except Exception:
                 pass
+    patch = {}
+    code, expected_flag = flag_for_location(
+        node.get("country_code") or "", node.get("country") or "",
+        node.get("city") or "", node.get("flag") or "",
+    )
+    if code and not node.get("country_code"):
+        patch["country_code"] = code
+    if expected_flag != (node.get("flag") or ""):
+        patch["flag"] = expected_flag
+    needs_location = addr and (not node.get("city") or not node.get("country") or not code)
+    if needs_location:
+        identity_probe = await _probe_node_identity(addr)
+        if identity_probe.get("kind") == "titan":
+            found = _discovery_fields(identity_probe.get("identity") or {})
+        elif identity_probe.get("kind") == "foreign":
+            try:
+                found = await asyncio.to_thread(detect_location, addr) or {}
+            except Exception:
+                found = {}
+        else:
+            found = {}
+        for key in ("city", "country", "country_code", "flag"):
+            if not (node.get(key) or patch.get(key)) and found.get(key):
+                patch[key] = found[key]
+        location = {**node, **patch}
+        code, expected_flag = flag_for_location(
+            location.get("country_code") or "", location.get("country") or "",
+            location.get("city") or "", location.get("flag") or "",
+        )
+        if code:
+            patch["country_code"] = code
+        patch["flag"] = expected_flag
+    if patch:
         try:
-            loc = await asyncio.to_thread(detect_location, addr)
+            updated = db.update_node(node_id, patch)
+            if updated:
+                node = updated
         except Exception:
-            loc = None
-        if loc:
-            patch = {}
-            if not node.get("city") and loc.get("city"):
-                patch["city"] = loc["city"][:64]
-            if not node.get("country") and loc.get("country"):
-                patch["country"] = loc["country"][:64]
-            if not node.get("country_code") and loc.get("country_code"):
-                patch["country_code"] = (loc["country_code"] or "")[:2].upper()
-                patch["flag"] = loc.get("flag") or _flag_for(patch["country_code"])
-            elif not node.get("flag") or node.get("flag") == "🏳️":
-                # Fill flag if missing but country_code already known
-                cc = node.get("country_code") or patch.get("country_code") or ""
-                if cc:
-                    patch["flag"] = _flag_for(cc)
-                elif loc.get("flag"):
-                    patch["flag"] = loc["flag"]
-                    if not patch.get("country_code") and loc.get("country_code"):
-                        patch["country_code"] = (loc["country_code"] or "")[:2].upper()
-            if patch:
-                try:
-                    updated = db.update_node(node_id, patch)
-                    if updated:
-                        node = updated
-                except Exception:
-                    pass
+            pass
     return {"ok": True, "status": status, "node": _serialize_node(node, status)}
 
 
@@ -2429,16 +2473,16 @@ async def api_node_register(request: Request):
     host = re.sub(r"^[a-zA-Z][a-zA-Z0-9+.-]*://", "", url)
     host = host.split("/", 1)[0].rsplit("@", 1)[-1].split(":")[0].strip("[]")
     if host:
-        loc = await asyncio.to_thread(detect_location, host)
-        if loc:
-            fields["city"] = loc.get("city", "")[:64]
-            fields["country"] = loc.get("country", "")[:64]
-            fields["country_code"] = loc.get("country_code", "")[:2]
-            fields["flag"] = loc.get("flag", "🏳️")
-    db.update_node(node["id"], fields)
+        identity_probe = await _probe_node_identity(url)
+        if identity_probe.get("kind") == "titan":
+            found = _discovery_fields(identity_probe.get("identity") or {})
+            for key in ("city", "country", "country_code", "flag"):
+                if not node.get(key) and found.get(key):
+                    fields[key] = found[key]
+    updated = db.update_node(node["id"], fields) or db.get_node(node["id"]) or node
     _trigger_node_sync()
     db.add_event("info", "node-register", f"{node['name']} -> {url}", ip=_client_ip(request))
-    return {"ok": True, "node": _serialize_node(db.get_node(node["id"]), await _node_status(node))}
+    return {"ok": True, "node": _serialize_node(updated, await _node_status(updated))}
 
 
 @app.get("/api/node/discover")
@@ -2630,14 +2674,21 @@ async def _claim_node(addr_url: str, panel_url: str, timeout: float = 8.0) -> di
 def _discovery_fields(identity: dict) -> dict:
     """Node columns the identity card can fill in (never overwrites with blanks)."""
     fields = {}
-    for key in ("name", "city", "country", "flag"):
-        value = (identity.get(key) or "").strip()
+    for key in ("name", "city", "country"):
+        value = str(identity.get(key) or "").strip()
         if value and value not in ("—", "🏳️"):
             fields[key] = value[:64]
-    cc = (identity.get("country_code") or "").strip().upper()
-    if len(cc) == 2:
+    cc, flag = flag_for_location(
+        identity.get("country_code") or "",
+        identity.get("country") or "",
+        identity.get("city") or "",
+        identity.get("flag") or "",
+    )
+    if cc:
         fields["country_code"] = cc
-        fields.setdefault("flag", _flag_for(cc))
+        fields["flag"] = flag
+    elif flag != "🌐":
+        fields["flag"] = flag
     return fields
 
 

@@ -17,6 +17,7 @@ import pytest
 REPO = pathlib.Path(__file__).resolve().parent.parent
 DASHBOARD = (REPO / "templates" / "dashboard.html").read_text(encoding="utf-8")
 BRIDGE = (REPO / "static" / "js" / "titan-bridge.js").read_text(encoding="utf-8")
+PAGES_JS = (REPO / "static" / "js" / "pages.js").read_text(encoding="utf-8")
 
 PERSIAN = re.compile(r"[\u0600-\u06FF]")
 
@@ -70,6 +71,33 @@ def test_the_bridge_renders_icon_actions_and_luxury_cards():
         assert act in BRIDGE, f"{act} is not wired"
     assert "openSubConfigModal" in BRIDGE and "openNodeSetupModal" in BRIDGE
     assert "const ICONS" in BRIDGE and BRIDGE.count("'<path") + BRIDGE.count("'<rect") >= 10
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_node_flag_prefers_country_code_to_a_stale_stored_emoji():
+    """Admin node views should show the ISO location, not a stale flag field."""
+    script = r"""
+const fs = require('fs');
+const src = fs.readFileSync(process.env.TITAN_PAGES_JS, 'utf8');
+const start = src.indexOf('function flagFor(cc)');
+const end = src.indexOf('function flagHtml', start);
+if (start < 0 || end < 0) throw new Error('node flag helper not found');
+new Function('globalThis', src.slice(start, end) + '\nglobalThis.resolveNodeFlagEmoji = nodeFlagEmoji;')(globalThis);
+const cases = [
+  [{ country_code: 'DE', flag: '🇳🇱' }, '🇩🇪'],
+  [{ country_code: '', flag: '🇸🇬' }, '🇸🇬'],
+  [{ country_code: '', flag: '🏳️' }, '🌐'],
+];
+for (const [node, expected] of cases) {
+  const actual = globalThis.resolveNodeFlagEmoji(node);
+  if (actual !== expected) throw new Error(`${JSON.stringify(node)}: expected ${expected}, got ${actual}`);
+}
+"""
+    result = subprocess.run(
+        [shutil.which("node"), "-e", script], cwd=str(REPO), capture_output=True, text=True,
+        env={"PATH": "/usr/bin:/bin:/usr/local/bin", "TITAN_PAGES_JS": str(REPO / "static" / "js" / "pages.js")},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_the_subscription_builder_and_node_detection_are_wired():
@@ -169,7 +197,12 @@ def test_the_login_page_has_one_shipped_responsive_block():
     block = block[: block.index("</style>")]
     # the two panels are 563 + 542 px wide; between 901 and 1125 px they had no rule
     assert "@media (min-width:901px) and (max-width:1125px)" in block
-    assert ".password input" in block, "a phone must not zoom when the password box is focused"
+    assert ".password input{font-size:16px" in block, "a phone must not zoom when the password box is focused"
+    assert "grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0" in login
+    assert ".left{border-top-right-radius:0;border-bottom-right-radius:0}" in login
+    assert ".right{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:-1px}" in login
+    assert ".left{border-radius:18px 0 0 18px" in block
+    assert ".right{border-radius:0 18px 18px 0" in block
 
 
 def test_every_page_asks_for_the_notch_area():

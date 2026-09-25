@@ -813,6 +813,25 @@ button{cursor:pointer}
   .nl-metrics{gap:6px}
 }
 </style>
+<style id="dashboard-ltr-language">
+/* Language-only direction changes; the existing cards, dimensions and theme stay untouched. */
+html[dir="ltr"] .sidebar,html[dir="ltr"] .main,html[dir="ltr"] .nav,html[dir="ltr"] .section-view,
+html[dir="ltr"] .search-wrap,html[dir="ltr"] .search,html[dir="ltr"] .actions,html[dir="ltr"] .profile,
+html[dir="ltr"] .stats,html[dir="ltr"] .recent-table-head,html[dir="ltr"] .recent-table-row,html[dir="ltr"] .data-table,
+html[dir="ltr"] .chart-panel,html[dir="ltr"] .server-panel,html[dir="ltr"] .recent-panel,
+html[dir="ltr"] .detail-card{direction:ltr}
+html[dir="ltr"] .nav-item,html[dir="ltr"] .sidebar-foot,html[dir="ltr"] .welcome,
+html[dir="ltr"] .card-copy,html[dir="ltr"] .chart-panel,html[dir="ltr"] .server-panel,
+html[dir="ltr"] .recent-panel,html[dir="ltr"] .section-head,html[dir="ltr"] .section-toolbar,
+html[dir="ltr"] .detail-card,html[dir="ltr"] .field,html[dir="ltr"] .toggle-row,
+html[dir="ltr"] .data-table th,html[dir="ltr"] .data-table td,
+html[dir="ltr"] .search input,html[dir="ltr"] .recent-table-head>div,html[dir="ltr"] .recent-table-row>div{direction:ltr;text-align:left}
+html[dir="ltr"] .nav-item{text-align:left}
+html[dir="ltr"] .profile-role .dot{margin-left:0;margin-right:4px}
+html[dir="ltr"] .nav-item:hover{transform:translateX(2px)}
+html[dir="ltr"] .welcome{align-items:flex-start}
+html[dir="ltr"] .latency small,html[dir="ltr"] .ping small{direction:ltr}
+</style>
 </head>
 <body>
 <input type="checkbox" id="menu" hidden>
@@ -1013,7 +1032,7 @@ button{cursor:pointer}
 <section class="section-view" data-section="settings">
  <div class="section-head"><div><h2>تنظیمات</h2><p>پیکربندی عمومی پنل</p></div><div class="section-actions"><button class="section-btn primary" data-demo="ذخیره تغییرات">ذخیره ✓</button></div></div>
  <div class="section-grid">
-  <article class="detail-card"><h3>عمومی</h3><div class="form-grid"><div class="field full"><label>دامنه عمومی (اختیاری)</label><input placeholder="example.com"></div><div class="field"><label>پورت عمومی پنل (پیش‌فرض 443)</label><input value="443"></div><div class="field"><label>زبان پنل</label><select><option>فارسی</option><option>English</option></select></div></div><p class="sub" style="margin-top:12px">دامنه‌ای که کلاینت‌ها برای اتصال به پنل استفاده می‌کنند. اگر خالی باشد از آدرس فعلی استفاده می‌شود.</p></article>
+  <article class="detail-card"><h3>عمومی</h3><div class="form-grid"><div class="field full"><label>دامنه عمومی (اختیاری)</label><input placeholder="example.com"></div><div class="field"><label>پورت عمومی پنل (پیش‌فرض 443)</label><input value="443"></div><div class="field"><label for="dashboardLanguage">زبان پنل</label><select id="dashboardLanguage"><option value="fa">فارسی</option><option value="en">English</option></select></div></div><p class="sub" style="margin-top:12px">دامنه‌ای که کلاینت‌ها برای اتصال به پنل استفاده می‌کنند. اگر خالی باشد از آدرس فعلی استفاده می‌شود.</p></article>
   <article class="detail-card"><h3>امنیت</h3><div class="notice">رمز عبور هنوز تنظیم نشده است. برای امنیت، یک رمز عبور قوی انتخاب کنید.</div><div class="field"><label>رمز عبور فعلی</label><input type="password" placeholder="••••••••"></div><div class="field" style="margin-top:10px"><label>رمز عبور جدید</label><input type="password" placeholder="رمز عبور جدید"></div><button class="mini-btn" style="margin-top:12px" data-demo="تغییر رمز عبور">تغییر رمز عبور ↗</button></article>
   <article class="detail-card"><h3>تصویر پروفایل</h3><div style="display:grid;place-items:center;gap:10px;padding:8px"><div class="avatar" style="width:72px;height:72px;border-radius:22px;font-size:27px;box-shadow:0 0 28px rgba(126,70,255,.3)">◈</div><p class="sub" style="text-align:center">برای خود و کاربران، یک تصویر انتخاب کنید. پیشنهاد می‌شود از لوگوی TiTaN استفاده شود.</p><button class="section-btn primary" data-demo="انتخاب از گالری">انتخاب از گالری ↗</button></div></article>
   <article class="detail-card"><h3>شبکه</h3><div class="field"><label>پروتکل اتصال پیش‌فرض</label><select><option>WS</option><option>TCP</option><option>GRPC</option></select></div><div class="field" style="margin-top:10px"><label>Fingerprint پیش‌فرض</label><select><option>chrome</option><option>firefox</option><option>safari</option></select></div><div class="field" style="margin-top:10px"><label>ALPN پیش‌فرض</label><input value="http/1.1"></div><div class="field" style="margin-top:10px"><label>SNI سفارشی (اختیاری)</label><input placeholder=""></div></article>

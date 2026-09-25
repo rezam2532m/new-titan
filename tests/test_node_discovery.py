@@ -7,6 +7,7 @@ form itself, and a node that holds no credential is claimed over the same channe
 so nothing has to be typed. The manual path still exists and copies every
 variable at once.
 """
+import asyncio
 import shutil
 import tempfile
 
@@ -16,6 +17,8 @@ from fastapi.testclient import TestClient
 from app import db, security
 from app import main as m
 from app import nodes as nodesync
+from app import tasks as bg
+from app.geo import detect_egress_location, flag_for_location, railway_location
 
 
 @pytest.fixture()
@@ -40,11 +43,139 @@ def panel(monkeypatch):
 ORIGIN = {"Origin": "http://testserver"}
 
 
+def test_railway_location_matches_region_suffix_and_keeps_unknown_regions_unknown():
+    location = railway_location("europe-west4-drams3a")
+    assert location["known"] is True
+    assert (location["city"], location["country"], location["country_code"], location["flag"]) == (
+        "Amsterdam", "Netherlands", "NL", "🇳🇱")
+
+    unknown = railway_location("europe-west9-future")
+    assert unknown["known"] is False
+    assert unknown["city"] == unknown["country"] == unknown["country_code"] == ""
+    assert unknown["flag"] == "🌐"
+
+
+def test_egress_geoip_uses_the_process_address_and_returns_a_matching_flag(monkeypatch):
+    calls = []
+
+    class Response:
+        def raise_for_status(self):
+            pass
+
+        @staticmethod
+        def json():
+            return {"status": "success", "city": "Singapore", "country": "Singapore", "countryCode": "SG"}
+
+    def _get(url, timeout):
+        calls.append((url, timeout))
+        return Response()
+
+    monkeypatch.setattr("app.geo.httpx.get", _get)
+    location = detect_egress_location(timeout=1.5)
+    assert location == {
+        "city": "Singapore", "country": "Singapore", "country_code": "SG", "flag": "🇸🇬"
+    }
+    assert calls == [("http://ip-api.com/json/?fields=status,country,countryCode,city", 1.5)]
+
+
+def test_location_refresh_does_not_use_cloudflare_colo_as_the_node_location(monkeypatch):
+    monkeypatch.delenv("RAILWAY_REPLICA_REGION", raising=False)
+    monkeypatch.setitem(bg.LOCATION, "colo", "?")
+    updates = []
+
+    class TraceResponse:
+        text = "colo=AMS\n"
+
+    class TraceClient:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args):
+            return None
+
+        async def get(self, _url):
+            return TraceResponse()
+
+    class StopRefresh(Exception):
+        pass
+
+    async def _stop(_seconds):
+        raise StopRefresh
+
+    monkeypatch.setattr(bg.httpx, "AsyncClient", TraceClient)
+    monkeypatch.setattr("app.geo.detect_egress_location", lambda: {
+        "city": "Singapore", "country": "Singapore", "country_code": "SG", "flag": "🇸🇬"
+    })
+    monkeypatch.setattr(bg.db, "set_local_node_location", lambda *args, **_kwargs: updates.append(args))
+    monkeypatch.setattr(bg.asyncio, "sleep", _stop)
+
+    with pytest.raises(StopRefresh):
+        asyncio.run(bg._refresh_location())
+
+    assert bg.LOCATION["colo"] == "AMS", "Cloudflare colo should still feed the edge widget"
+    assert updates == [
+        ("", "", "", "🌐"),
+        ("Amsterdam", "Netherlands", "NL", "🇳🇱"),
+        ("Singapore", "Singapore", "SG", "🇸🇬"),
+    ]
+
+def test_country_code_overrides_stale_flags_and_known_countries_fill_missing_codes():
+    assert flag_for_location("DE", "Netherlands", "Amsterdam", "🇳🇱") == ("DE", "🇩🇪")
+    assert flag_for_location("", "Netherlands", "Amsterdam", "🇺🇸") == ("NL", "🇳🇱")
+    assert flag_for_location("Germany", "Germany", "Berlin", "🇺🇸") == ("DE", "🇩🇪")
+    assert flag_for_location("UK", "", "", "🇳🇱") == ("GB", "🇬🇧")
+    serialized = m._serialize_node({
+        "id": 7, "name": "node", "city": "Berlin", "country": "Germany",
+        "country_code": "Germany", "flag": "🇳🇱", "token": "secret",
+    }, {})
+    assert serialized["flag"] == "🇩🇪" and serialized["country_code"] == "DE"
+    assert "token" not in serialized
+
+
 def _me(panel):
     return panel.get("/api/me").json() if panel.get("/api/me").status_code == 200 else {}
 
 
 # ─────────────────────────────────────────────────────── node-side endpoints
+def test_node_identity_prefers_railway_region_over_stale_edge_location(panel, monkeypatch):
+    monkeypatch.setenv("RAILWAY_REPLICA_REGION", "europe-west4-drams3a")
+    monkeypatch.setattr(m.config, "IS_NODE", True)
+    db.set_local_node_location("San Jose", "United States", "US", "🇺🇸")
+
+    identity = nodesync.identity()
+    assert (identity["city"], identity["country"], identity["country_code"], identity["flag"]) == (
+        "Amsterdam", "Netherlands", "NL", "🇳🇱")
+
+
+def test_unknown_railway_region_does_not_inherit_stale_edge_location(panel, monkeypatch):
+    monkeypatch.setenv("RAILWAY_REPLICA_REGION", "europe-west9-future")
+    monkeypatch.setattr(m.config, "IS_NODE", True)
+    db.set_local_node_location("Frankfurt", "Germany", "DE", "🇩🇪")
+
+    identity = nodesync.identity()
+    assert identity["city"] == identity["country"] == identity["country_code"] == ""
+    assert identity["flag"] == "🌐"
+
+
+def test_cloudflare_fallback_remains_a_panel_place_not_the_node_location(panel, monkeypatch):
+    monkeypatch.delenv("RAILWAY_REPLICA_REGION", raising=False)
+    monkeypatch.setattr(bg, "NODE_LOCATION", {})
+    monkeypatch.setattr(bg, "EDGE_FALLBACK_LOCATION", {
+        "city": "Amsterdam", "country": "Netherlands", "country_code": "NL", "flag": "🇳🇱"
+    })
+    db.set_local_node_location("Amsterdam", "Netherlands", "NL", "🇳🇱")
+
+    identity = nodesync.identity()
+    assert identity["city"] == identity["country"] == identity["country_code"] == ""
+    assert identity["flag"] == "🌐"
+    serialized = m._serialize_node({**db.local_node(), "is_local": 1}, {})
+    assert serialized["city"] == serialized["country"] == serialized["country_code"] == ""
+    assert serialized["flag"] == "🌐"
+
+
 def test_a_node_answers_an_identity_card_without_leaking_anything(panel, monkeypatch):
     """The panel calls this before it can add anything, so it must not need a session."""
     monkeypatch.setattr(m.config, "IS_NODE", True)
@@ -198,6 +329,83 @@ def test_when_detection_fails_the_manual_path_still_works(panel, monkeypatch):
     assert body["node"]["name"] == "manual-node" and body["node"]["city"] == "Dubai"
     assert body["sync_now"]["ok"] is False
     assert body["setup"]["block"].splitlines()[0].startswith("TITAN_ROLE=")
+
+
+def test_unreachable_titan_node_stays_unknown_instead_of_using_edge_geoip(panel, monkeypatch):
+    async def _unreachable(_addr, timeout=6.0):
+        return {"kind": "unreachable", "url": "", "identity": {}, "error": "timeout"}
+
+    async def _fake_status(_node):
+        return {"online": False}
+
+    async def _fake_sync(node_id, timeout=6.0):
+        return {"node_id": node_id, "ok": False, "error": "timeout"}
+
+    geo_calls = []
+    monkeypatch.setattr(m, "_probe_node_identity", _unreachable)
+    monkeypatch.setattr(m, "_node_status", _fake_status)
+    monkeypatch.setattr(m, "_sync_node_now", _fake_sync)
+    monkeypatch.setattr(m, "detect_location", lambda addr: geo_calls.append(addr) or {
+        "city": "Ashburn", "country": "United States", "country_code": "US", "flag": "🇺🇸"})
+
+    response = panel.post("/api/nodes", json={
+        "name": "unknown-node", "address": "edge.example.com", "flag": "🌐"}, headers=ORIGIN)
+    assert response.status_code == 200, response.text
+    node = response.json()["node"]
+    assert node["city"] == node["country"] == node["country_code"] == ""
+    assert node["flag"] == "🌐" and geo_calls == []
+
+
+def test_foreign_host_with_neutral_flag_can_still_use_domain_geoip(panel, monkeypatch):
+    async def _foreign(_addr, timeout=6.0):
+        return {"kind": "foreign", "url": "https://example.com", "identity": {}, "error": "not-a-titan-node"}
+
+    async def _fake_status(_node):
+        return {"online": False}
+
+    async def _fake_sync(node_id, timeout=6.0):
+        return {"node_id": node_id, "ok": False, "error": "not-a-titan-node"}
+
+    geo_calls = []
+    monkeypatch.setattr(m, "_probe_node_identity", _foreign)
+    monkeypatch.setattr(m, "_node_status", _fake_status)
+    monkeypatch.setattr(m, "_sync_node_now", _fake_sync)
+
+    def _geo(addr):
+        geo_calls.append(addr)
+        return {"city": "Amsterdam", "country": "Netherlands", "country_code": "NL", "flag": "🇳🇱"}
+
+    monkeypatch.setattr(m, "detect_location", _geo)
+    response = panel.post("/api/nodes", json={
+        "name": "foreign-node", "address": "foreign.example.com", "flag": "🌐"}, headers=ORIGIN)
+    assert response.status_code == 200, response.text
+    node = response.json()["node"]
+    assert geo_calls and node["city"] == "Amsterdam" and node["country_code"] == "NL"
+    assert node["flag"] == "🇳🇱"
+
+
+def test_ping_fills_and_persists_the_node_identity_location(panel, monkeypatch):
+    node = db.create_node({"name": "auto-node", "address": "https://auto.example.com", "flag": "🌐"})
+
+    async def _identity(_addr, timeout=6.0):
+        return {"kind": "titan", "url": "https://auto.example.com", "identity": {
+            "app": "titan", "name": "amsterdam-node", "city": "Amsterdam",
+            "country": "Netherlands", "country_code": "NL", "flag": "🇺🇸",
+        }, "error": ""}
+
+    async def _fake_status(_node):
+        return {"online": True, "latency_ms": 20}
+
+    monkeypatch.setattr(m, "_probe_node_identity", _identity)
+    monkeypatch.setattr(m, "_node_status", _fake_status)
+
+    response = panel.post(f"/api/nodes/{node['id']}/ping")
+    assert response.status_code == 200, response.text
+    reported = response.json()["node"]
+    stored = db.get_node(node["id"])
+    for value in (reported, stored):
+        assert value["city"] == "Amsterdam" and value["country_code"] == "NL"
+        assert value["flag"] == "🇳🇱"
 
 
 def test_claiming_an_existing_node_reports_every_step(panel, monkeypatch):

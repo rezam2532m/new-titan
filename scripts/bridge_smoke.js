@@ -56,7 +56,8 @@ const NODES = [
     status: { online: true, latency_ms: 118, cpu: 34, ram: 52, disk: 91, version: '1.0.0', uptime: '2d', reason: '' },
     sync: { expected: 3, on_node: 3, has_credential: true, credential: 'shared', ok: true, at: 1789000000, error: '', serving: ['u1', 'u2', 'u3'] },
     edge: { scheme: 'https', port: 443, measured: true }, raw_open: { [RAW_OPEN]: false } },
-  { id: 3, name: 'Frankfurt-VPS', is_local: false, enabled: true, address: 'https://fra.example.com:8443', flag: '🇩🇪',
+  // Deliberately stale: the country code must win over the stored emoji.
+  { id: 3, name: 'Frankfurt-VPS', is_local: false, enabled: true, address: 'https://fra.example.com:8443', flag: '🇳🇱',
     city: 'Frankfurt', country_code: 'DE', country: 'Germany', last_seen: 1789000000,
     status: { online: true, latency_ms: 310, cpu: 12, ram: 28, disk: 33, version: '1.0.0', uptime: '9d', reason: '' },
     sync: { expected: 2, on_node: 2, has_credential: true, ok: true, at: 1789000000, error: '', serving: ['u1', 'u2'] },
@@ -150,6 +151,7 @@ const check = (cond, msg) => { if (!cond) failures.push(msg); };
   for (const needle of ['nl-medal', 'nl-dial', 'nl-metric', 'nl-caps', 'rg-fg', 'ico-btn', 'nl-orb']) {
     check(grid.includes(needle), `server cards are missing ${needle}`);
   }
+  check(grid.includes('🇩🇪'), 'the node country code did not override its stale stored flag');
   check(!grid.includes('undefined'), 'server cards contain the string "undefined"');
   check(grid.includes(`raw ${RAW_OPEN} ✓`), 'an open raw port is not shown as open');
   check(grid.includes(`raw ${RAW_OPEN} ✕`), 'a closed raw port is not shown as closed');

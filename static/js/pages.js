@@ -19,13 +19,22 @@
   function flagFor(cc) {
     cc = (cc || '').toUpperCase().trim();
     if (/^[A-Z]{2}$/.test(cc)) return String.fromCodePoint(...[...cc].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
-    return '🏳️';
+    return '🌐';
   }
 
-  // Country flag for a node: SVG image (renders on every OS) with emoji fallback.
+  function nodeFlagEmoji(n) {
+    const cc = ((n && n.country_code) || '').toString().trim();
+    if (/^[A-Za-z]{2}$/.test(cc)) return flagFor(cc);
+    const stored = String((n && n.flag) || '').trim();
+    const indicators = [...stored].filter(ch => ch.codePointAt(0) >= 0x1F1E6 && ch.codePointAt(0) <= 0x1F1FF);
+    return indicators.length === 2 && stored !== '🏳️' ? stored : '🌐';
+  }
+
+  // Country flag for a node: derive it from the ISO country code first so a
+  // stale stored emoji can never overrule the node's actual country.
   function flagHtml(n, cls = '') {
     const cc = ((n && n.country_code) || '').toString().trim();
-    const emoji = (n && n.flag) || flagFor(cc) || '🌐';
+    const emoji = nodeFlagEmoji(n);
     if (/^[A-Za-z]{2}$/.test(cc)) {
       const lc = cc.toLowerCase();
       return `<span class="flag-wrap ${cls}"><img class="flag-img" src="https://flagcdn.com/w40/${lc}.png" srcset="https://flagcdn.com/w80/${lc}.png 2x" alt="${esc(cc.toUpperCase())}" loading="lazy" onerror="this.parentNode.classList.add('no-img')"><span class="flag-emoji">${esc(emoji)}</span></span>`;
@@ -35,10 +44,7 @@
 
   // Emoji flag for plain-text contexts (e.g. <option>).
   function flagEmoji(n) {
-    const cc = ((n && n.country_code) || '').toString().trim();
-    const fromCc = flagFor(cc);
-    if (fromCc !== '🏳️') return fromCc;
-    return (n && n.flag) || '🌐';
+    return nodeFlagEmoji(n);
   }
 
   // User's own profile picture (per-user avatar).
@@ -1118,7 +1124,7 @@
             <label class="field"><span class="field-label" data-i18n="city"></span><input class="input" name="city" value="${esc(node?.city || '')}"></label>
             <label class="field"><span class="field-label" data-i18n="country"></span><input class="input" name="country" value="${esc(node?.country || '')}"></label>
             <label class="field"><span class="field-label" data-i18n="country_code"></span><input class="input" name="country_code" id="nodeCc" value="${esc(cc)}" maxlength="2" style="text-transform:uppercase"></label>
-            <label class="field"><span class="field-label" data-i18n="flag_placeholder"></span><input class="input" name="flag" id="${flagInputId}" value="${esc(node?.flag || flagFor(cc))}"></label>
+            <label class="field"><span class="field-label" data-i18n="flag_placeholder"></span><input class="input" name="flag" id="${flagInputId}" value="${esc(nodeFlagEmoji(node||{country_code:cc}))}"></label>
           </div>
         </form>`,
       foot: `<button class="btn" data-close>${I18N.t('cancel')}</button>

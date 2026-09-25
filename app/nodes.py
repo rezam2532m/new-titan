@@ -23,6 +23,7 @@ import time
 import httpx
 
 from . import APP_VERSION, config, db, routing
+from .geo import flag_for_location, railway_location
 
 log = logging.getLogger("titan.nodes")
 
@@ -123,6 +124,48 @@ def identity() -> dict:
     admin back to typing variables.
     """
     local = db.local_node() or {}
+    # The replica's Railway region identifies where this process actually runs.
+    # A public Railway domain may resolve to an edge/proxy IP in another country,
+    # and a Cloudflare colo is the request/egress edge, not the node's region.
+    railway_region_configured = bool(os.environ.get("RAILWAY_REPLICA_REGION", "").strip())
+    location = railway_location()
+    if railway_region_configured:
+        # Unknown Railway regions stay unknown; never fall back to stale
+        # Cloudflare-colo or domain-geolocation data for a node's own location.
+        city = location.get("city") or ""
+        country = location.get("country") or ""
+        stored_code = location.get("country_code") or ""
+        stored_flag = location.get("flag") or "🌐"
+    else:
+        # The local DB row is also used for panel-targeted subscription labels.
+        # If its value is only the Cloudflare edge fallback, do not treat that as
+        # the node's location. Prefer the egress GeoIP cache; otherwise preserve
+        # a manually/previously authoritative row or report unknown.
+        from . import tasks as background
+
+        detected = background.NODE_LOCATION
+        edge = background.EDGE_FALLBACK_LOCATION
+        edge_is_only_location = bool(edge) and all(
+            str(local.get(field) or "").strip().casefold()
+            == str(edge.get(field) or "").strip().casefold()
+            for field in ("city", "country", "country_code")
+        )
+        if detected:
+            city = detected.get("city") or ""
+            country = detected.get("country") or ""
+            stored_code = detected.get("country_code") or ""
+            stored_flag = detected.get("flag") or "🌐"
+        elif edge_is_only_location:
+            city = country = stored_code = ""
+            stored_flag = "🌐"
+        else:
+            city = local.get("city") or ""
+            country = local.get("country") or ""
+            stored_code = local.get("country_code") or ""
+            stored_flag = local.get("flag") or ""
+    code, flag = flag_for_location(stored_code, country, city, stored_flag)
+    local_for_name = {**local, "city": city, "country": country,
+                      "country_code": code, "flag": flag}
     cred = node_credential()
     kind = ("shared" if config.NODE_SECRET else
             "claimed" if db.get_meta("node_secret") else
@@ -133,11 +176,11 @@ def identity() -> dict:
         "app": "titan",
         "version": APP_VERSION,
         "role": "node" if config.IS_NODE else "main",
-        "name": _own_name(local),
-        "city": local.get("city") or "",
-        "country": local.get("country") or "",
-        "country_code": (local.get("country_code") or "").upper(),
-        "flag": local.get("flag") or "🌐",
+        "name": _own_name(local_for_name),
+        "city": city,
+        "country": country,
+        "country_code": code,
+        "flag": flag,
         "url": config.NODE_URL or "",
         "edge": {"scheme": edge_scheme, "port": edge_port},
         "raw_ports": routing.raw_report(1) if config.IS_NODE else {},

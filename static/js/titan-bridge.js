@@ -5,7 +5,420 @@
   const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
   function fmtBytes(b){ b=Number(b)||0; if(b===0) return '0 B'; const u=['B','KB','MB','GB','TB']; let i=0; while(b>=1024&&i<u.length-1){b/=1024;i++;} return (i===0?b:b.toFixed(b>=10?1:2).replace(/\.0+$/,''))+' '+u[i]; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
-  function flagFor(cc){ cc=(cc||'').toUpperCase().trim(); if(/^[A-Z]{2}$/.test(cc)) return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)); return '🏳️'; }
+  function flagFor(cc){ cc=(cc||'').toUpperCase().trim(); if(/^[A-Z]{2}$/.test(cc)) return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)); return '🌐'; }
+  function nodeFlag(n){
+    const cc=String((n&&n.country_code)||'').toUpperCase().trim();
+    if(/^[A-Z]{2}$/.test(cc)) return flagFor(cc);
+    const stored=String((n&&n.flag)||'').trim();
+    return stored && stored!=='🏳️' && stored!=='🌐' ? stored : '🌐';
+  }
+
+  // Dashboard copy is translated in place so both the shipped sections and
+  // markup inserted later by the live-data bridge stay in the selected language.
+  const DASHBOARD_TEXT=Object.freeze({
+    'PRIVATE NETWORK':'شبکه خصوصی','English':'انگلیسی','Online':'آنلاین','Nodes':'نودها',
+    'داشبورد':'Dashboard','کاربران':'Users','کانفیگ‌ها':'Configs','سرورها (Nodes)':'Servers (Nodes)',
+    'اشتراک‌ها':'Subscriptions','گزارش‌ها':'Reports','تنظیمات':'Settings','مدیریت ادمین':'Admin management',
+    'ابزارها':'Tools','ادمین کل':'Super Admin','مدیر اصلی':'Owner','مدیر':'Admin',
+    'خوش آمدید، مدیر':'Welcome, Admin','خوش آمدید،':'Welcome,',
+    'نمای کلی سیستم TiTaN':'TiTaN system overview','کاربران فعال':'Active users','از 1 کاربر':'of 1 user',
+    'ترافیک مصرفی':'Traffic used','تعداد سرورها':'Number of servers','● 1 آنلاین':'● 1 online',
+    'کانفیگ‌های فعال':'Active configs','از 1 کانفیگ':'of 1 config','نمودار ترافیک':'Traffic chart',
+    'مصرف در 7 روز گذشته':'Usage in the last 7 days','۳ شهریور':'Sep 3','۴ شهریور':'Sep 4',
+    '۵ شهریور':'Sep 5','۶ شهریور':'Sep 6','۷ شهریور':'Sep 7','۸ شهریور':'Sep 8',
+    'وضعیت سرورها':'Server status','تاخیر':'Latency','تأخیر':'Latency','آنلاین':'Online','آفلاین':'Offline',
+    'مشاهده همه سرورها ←':'View all servers ←','کاربران اخیر':'Recent users','مشاهده همه':'View all',
+    'کاربر':'User','وضعیت':'Status','فعال':'Active','آخرین کانفیگ‌ها':'Latest configs','نام':'Name',
+    'نوع':'Type','سرور':'Server','مدیریت کاربران و دسترسی‌های فعال پنل':'Manage panel users and active access',
+    'همه کاربران':'All users','منقضی':'Expired','تعداد کل':'Total count','در حال اتصال':'Connecting',
+    'غیرفعال':'Disabled','مصرف ترافیک':'Traffic usage','مصرف امروز':'Today’s usage','کل مصرف':'Total usage',
+    'وضعیت اشتراک':'Subscription status','● 3 حساب':'● 3 accounts','نزدیک به انقضا':'Expiring soon',
+    '1 حساب':'1 account','0 حساب':'0 accounts','فهرست کاربران':'User list','۳ مورد':'3 items',
+    'شناسه':'ID','مصرف':'Usage','انقضا':'Expiry','عملیات':'Actions','30 روز':'30 days',
+    'ساخت، مدیریت و کنترل کانفیگ‌های اتصال':'Create, manage, and control connection configs',
+    'همه':'All','کل کانفیگ‌ها':'Total configs','پروتکل‌های استفاده‌شده':'Used protocols',
+    '3 مورد':'3 items','0 مورد':'0 items','اشتراک‌گذاری':'Sharing','لینک‌های فعال':'Active links',
+    'QR تولیدشده':'QR codes created','آخرین بروزرسانی':'Last updated','امروز':'Today',
+    'پروتکل':'Protocol','پورت':'Port','سرورها':'Servers',
+    'مدیریت نودها، سلامت اتصال و وضعیت سرویس‌ها':'Manage nodes, connection health, and service status',
+    'وضعیت نودها':'Node status','کل سرورها':'Total servers','سلامت اتصال':'Connection health',
+    'میانگین پینگ':'Average ping','پایداری':'Stability','وضعیت سرویس':'Service status',
+    'وضعیت پنل':'Panel status','سالم':'Healthy','اتصال نودها':'Node connection','برقرار':'Connected',
+    'ساخت لینک اشتراک از بین کانفیگ‌ها و کاربران':'Create a subscription link from configs and users',
+    'لینک اشتراک':'Subscription link','استفاده':'Usage','هرگز':'Never',
+    'نمایش آماری مصرف، کاربران و رویدادهای پنل':'Analytics for usage, users, and panel events',
+    'دریافت گزارش':'Get report','۷ روز اخیر':'Last 7 days','۳۰ روز اخیر':'Last 30 days',
+    'فیلتر تاریخ ▾':'Filter by date ▾','دانلود':'Download','آپلود':'Upload','رشد کاربران':'User growth',
+    'کاربر جدید':'New user','کاربر فعال':'Active user','نرخ فعالیت':'Activity rate',
+    'رویدادهای سیستم':'System events','ورود موفق':'Successful sign-ins','خطاها':'Errors',
+    'بررسی نودها':'Node checks','نمودار مصرف هفتگی':'Weekly usage chart','شنبه تا جمعه':'Saturday to Friday',
+    'مجموع 1.24 GB':'Total 1.24 GB','آخرین رویدادها':'Latest events','ثبت فعالیت‌ها':'Activity log',
+    'رویداد':'Event','زمان':'Time','نتیجه':'Result','ورود به پنل':'Panel sign-in','همین لحظه':'Just now',
+    'موفق':'Successful','بررسی سرور':'Server check','سیستم':'System','۲ دقیقه قبل':'2 minutes ago',
+    'ساخت کانفیگ':'Config created','۱۰ دقیقه قبل':'10 minutes ago','پیکربندی عمومی پنل':'General panel configuration',
+    'ذخیره ✓':'Save ✓','عمومی':'General','دامنه عمومی (اختیاری)':'Public domain (optional)',
+    'پورت عمومی پنل (پیش‌فرض 443)':'Public panel port (default 443)','زبان پنل':'Panel language',
+    'فارسی':'Persian','دامنه‌ای که کلاینت‌ها برای اتصال به پنل استفاده می‌کنند. اگر خالی باشد از آدرس فعلی استفاده می‌شود.':'The domain clients use to reach the panel. If left blank, the current address is used.',
+    'امنیت':'Security','رمز عبور هنوز تنظیم نشده است. برای امنیت، یک رمز عبور قوی انتخاب کنید.':'No password is set yet. Choose a strong password for security.',
+    'رمز عبور فعلی':'Current password','رمز عبور جدید':'New password','تغییر رمز عبور ↗':'Change password ↗',
+    'تصویر پروفایل':'Profile picture','برای خود و کاربران، یک تصویر انتخاب کنید. پیشنهاد می‌شود از لوگوی TiTaN استفاده شود.':'Choose a picture for yourself and users. The TiTaN logo is recommended.',
+    'انتخاب از گالری ↗':'Choose from gallery','شبکه':'Network','پروتکل اتصال پیش‌فرض':'Default connection protocol',
+    'Fingerprint پیش‌فرض':'Default fingerprint','Fingerprint':'اثر انگشت','ALPN پیش‌فرض':'Default ALPN',
+    'SNI سفارشی (اختیاری)':'Custom SNI (optional)','پشتیبان‌گیری':'Backup','پشتیبان‌گیری خودکار':'Automatic backup',
+    'بازه پشتیبان‌گیری (ساعت)':'Backup interval (hours)','دانلود پشتیبان ↓':'Download backup ↓',
+    'بازیابی از پشتیبان ↑':'Restore from backup ↑','مسدودسازی IPهای خصوصی':'Block private IPs',
+    'مسدودسازی تبلیغات':'Block ads','مسدودسازی سایت‌های ایرانی':'Block Iranian sites',
+    'اعلان اتصال جدید':'Notify on new connection','فعال‌سازی Fragment':'Enable Fragment','طول Fragment':'Fragment length',
+    'بازه Fragment':'Fragment interval','⏻ راه‌اندازی مجدد پنل':'⏻ Restart panel',
+    'مدیریت مدیران پنل و سطح دسترسی آن‌ها':'Manage panel administrators and their access levels',
+    '+ افزودن ادمین':'+ Add admin','مدیران پنل':'Panel admins','تعداد مدیران':'Admin count',
+    'آخرین ورود':'Last login','سطح دسترسی':'Access level','مدیریت کاربران':'Manage users',
+    'مجاز':'Allowed','مدیریت سرورها':'Manage servers','تنظیمات سیستم':'System settings',
+    'امنیت مدیران':'Admin security','ثبت فعالیت مدیران':'Admin activity log',
+    'محدودیت نشست همزمان':'Concurrent session limit','فهرست ادمین‌ها':'Admin list','۱ مدیر':'1 admin',
+    'نقش':'Role','ویرایش':'Edit','ابزارهای کاربردی برای نگهداری، بررسی و عیب‌یابی پنل':'Useful tools to maintain, inspect, and troubleshoot the panel',
+    'تست اتصال':'Connection test','بررسی دسترسی به نودها و سرویس‌های شبکه':'Check node access and network services',
+    'اجرای تست اتصال':'Run connection test','پاک‌سازی':'Cleanup',
+    'حذف داده‌های موقت و مرتب‌سازی اطلاعات قدیمی':'Remove temporary data and organize old records',
+    'پاک‌سازی داده‌ها':'Clean up data','تهیه نسخه پشتیبان از تنظیمات و داده‌های پنل':'Back up panel settings and data',
+    'ساخت نسخه پشتیبان':'Create backup','بررسی سلامت سیستم':'System health check','سرویس پنل':'Panel service',
+    'پایگاه داده':'Database','لاگ سیستم':'System log','رویدادهای ثبت‌شده':'Recorded events',
+    'خطاهای اخیر':'Recent errors','نمایش لاگ‌ها':'View logs','ابزارهای سریع':'Quick tools',
+    'پاک‌سازی کش':'Clear cache','بررسی پورت':'Check port','بازنشانی وضعیت':'Reset status',
+    'یا ورود با':'Or sign in with','پنل':'Panel','داده‌ای وجود ندارد':'No data available',
+    'داده‌ای موجود نیست':'No data available','موردی وجود ندارد':'No items found','کاربری وجود ندارد':'No users found',
+    'کانفیگی وجود ندارد':'No configs found','سروری ثبت نشده است':'No server registered',
+    'سروری ثبت نشده است — با دکمهٔ افزودن سرور یک نود بساز.':'No server registered — use Add server to create a node.',
+    'کانفیگی برای این کاربر وجود ندارد':'This user has no configs','نامعلوم':'Unknown','نامشخص':'Unknown',
+    'خروجی':'Output','انجام شد':'Done','بستن':'Close','لغو':'Cancel','ذخیره':'Save','حذف':'Delete',
+    'کپی':'Copy','کپی شد!':'Copied!','کپی لینک':'Copy link','ذخیره شد':'Saved','حذف شد':'Deleted',
+    'حذف کاربر؟':'Delete user?','حذف کانفیگ؟':'Delete config?','حذف سرور؟':'Delete server?',
+    'روز':'days','ساعت':'hours','دقیقه':'minutes','ثانیه':'seconds','دقیقه قبل':'minutes ago',
+    'روز قبل':'days ago','سرورها (Nodes)':'Servers (Nodes)',
+    'اعلان‌ها':'Notifications','افزودن سرور (نود جدید)':'Add server (new node)','باز و بسته کردن منو':'Toggle menu',
+    'جزئیات':'Details','جستجو':'Search','حذف گروهی':'Bulk delete','خروجی گرفتن از کاربران':'Export users',
+    'رفرش':'Refresh','ساخت لینک اشتراک جدید':'Create subscription link','ساخت کانفیگ جدید':'Create config',
+    'ناوبری':'Navigation','پیام‌ها':'Messages','پینگ‌سنج':'Ping tester','پروفایل کاربر':'User profile',
+    'جستجو...':'Search...','جستجوی کاربر، نام یا شناسه...':'Search users, names, or IDs...',
+    'جستجوی کانفیگ...':'Search configs...','QR اشتراک':'Subscription QR','افزودن ادمین':'Add admin',
+    'انتخاب از گالری':'Choose from gallery','بازنشانی وضعیت':'Reset status','بازیابی پشتیبان':'Restore backup',
+    'بررسی پورت':'Check port','تست اتصال':'Connection test','تغییر رمز عبور':'Change password',
+    'تهیه نسخه پشتیبان':'Create backup','دانلود پشتیبان':'Download backup','دریافت گزارش':'Get report',
+    'ذخیره تغییرات':'Save changes','راه‌اندازی مجدد پنل':'Restart panel','مدیریت اشتراک':'Manage subscription',
+    'نمایش اشتراک':'View subscription','نمایش لاگ سیستم':'View system logs','پاک‌سازی داده‌های موقت':'Clear temporary data',
+    'پاک‌سازی کش':'Clear cache','کپی اشتراک':'Copy subscription',
+    'پنل (همین آدرسی که باز است)':'Panel (this address)','لینک‌هایی که روی پنل سرو می‌شوند از همین مسیر می‌آیند':'Links served by the panel use this route',
+    'نزدیک‌ترین نقطهٔ Cloudflare':'Nearest Cloudflare point','کفِ پینگ ممکن برای یک سرور نزدیکِ شما':'The lowest ping to a nearby server',
+    'این عدد، رفت‌وبرگشت واقعی از':'This is the real round trip from','همین دستگاه':'this device',
+    'تا هر مقصد است — نه پینگ پنل به نود.':'to each destination — not the panel-to-node ping.',
+    'هرچه خروجیِ کانفیگ به شما نزدیک‌تر باشد، پینگ کمتر می‌شود.':'The closer the config exit is to you, the lower the ping.',
+    'در حال اندازه‌گیری':'Measuring…','اندازه‌گیری':'Measurement','اندازه‌گیری این آدرس':'Measure this address','اندازه‌گیری مجدد':'Measure again',
+    'مرجع پینگ از ایران: ':'Ping reference from Iran: ','از همین دستگاه':'from this device','دوم':'2nd','ترکیه':'Türkiye','امارات':'UAE','آلمان':'Germany',
+    'هلند':'Netherlands','آمریکا':'United States','فرانسه':'France','انگلستان':'United Kingdom',
+    'سنگاپور':'Singapore','هند':'India','سن‌خوزه':'San Jose','ویرجینیا':'Virginia','فرانکفورت':'Frankfurt',
+    'لندن':'London','دبی':'Dubai','پاریس':'Paris','اروپا':'Europe','دورتر از حد مطلوب':'Farther than ideal',
+    'هم‌سایه (ترکیه/امارات)':'Nearby (Türkiye/UAE)','آمریکا/دور':'US / far','آدرس ثبت نشده':'No address registered',
+    'آدرس http است؛ از صفحهٔ https اندازه‌گیری نمی‌شود':'HTTP address; it cannot be measured from this HTTPS page',
+    'سریع‌ترین مسیر از دستگاه شما: ':'Fastest route from your device: ',' با ':' at ',
+    'بهترین نود شما ':'Your fastest node: ','بهترین نود شما (':'Your fastest node (',
+    'با ':'at ','فاصله دارد.':'away.','نزدیک کفِ ممکن است ✓':'is near the minimum possible ✓',
+    'منطقهٔ فعلی پنل: ':'Current panel region: ','چیزی قابل اندازه‌گیری نبود.':'Nothing could be measured.',
+    'نام اشتراک':'Subscription name','مثلاً پک موبایل':'e.g. Mobile pack','انتخاب تصویر این لینک':'Choose an image for this link',
+    'کاربر جدید':'New user','ویرایش کاربر':'Edit user','افزودن کاربر':'Add user','نام کاربری':'Username',
+    'حجم':'Quota','حجم گیگابایت':'Quota (GB)','حجم (گیگابایت)':'Quota (GB)','اعتبار روز':'Validity (days)',
+    'انقضای روز':'Expiry (days)','روز اعتبار':'Validity (days)','سقف درخواست':'Request limit',
+    'حداکثر دستگاه':'Max devices','IPهای مجاز':'Allowed IPs','یادداشت':'Note','یادداشت (اختیاری)':'Note (optional)',
+    'شناسه کاربر':'User ID','ویرایش کانفیگ':'Edit config','افزودن کانفیگ':'Add config','انتخاب کاربر':'Select user',
+    'انتخاب سرور':'Select server','انتخاب پروتکل':'Select protocol','روش رمزنگاری SS':'SS encryption method',
+    'نام کانفیگ':'Config name','نام نود':'Node name','نام سرور':'Server name','توکن':'Token',
+    'فعال بودن':'Enabled','فعال/غیرفعال':'Enable/disable','تغییر UUID':'Rotate UUID','صفر کردن مصرف':'Reset usage',
+    'وضعیت کاربر':'User status','وضعیت نود':'Node status','کد کشور':'Country code','پرچم کشور':'Country flag',
+    'هیچ کاربری وجود ندارد':'No users found','هنوز کاربری ایجاد نشده است':'No users created yet',
+    'هنوز کانفیگی ساخته نشده است':'No configs created yet','هنوز هیچ سروری اضافه نشده است':'No servers added yet',
+    'اطلاعات اصلی':'Main information','سرور':'Server','شبکه':'Network','محدودیت‌ها':'Limits','پیش‌نمایش':'Preview',
+    'جزئیات کاربر':'User details','اطلاعات کاربر':'User information','گزینه‌ها':'Options','همه کانفیگ‌ها':'All configs',
+    'افزودن به اشتراک':'Add to subscription','تعداد کانفیگ':'Config count','تعداد کاربران':'User count',
+    'تعداد نودها':'Node count','میانگین پینگ':'Average ping','میانگین تأخیر':'Average latency',
+    'مصرف کل':'Total usage','مصرف امروز':'Today’s usage','کل ترافیک':'Total traffic','حجم باقی‌مانده':'Remaining quota',
+    'اشتراک ساخته شد':'Subscription created','اشتراک ویرایش شد':'Subscription updated','ساخت اشتراک':'Create subscription',
+    'ویرایش اشتراک':'Edit subscription','نام لینک اشتراک':'Subscription link name','کانفیگ‌های انتخاب‌شده':'Selected configs',
+    'انتخاب همه':'Select all','لغو انتخاب همه':'Clear selection','انتخاب کانفیگ‌ها':'Select configs',
+    'لینک اشتراک ساخته شد':'Subscription link created','لینک اشتراک ویرایش شد':'Subscription link updated',
+    'دسترسی خودکار داده شد':'Automatic access granted','دسترسی خودکار نشد':'Automatic access was not granted',
+    'جستجوی کاربر':'Search users','جستجوی سرور':'Search servers','فقط آنلاین':'Online only','فقط فعال':'Active only',
+    'در حال بارگذاری':'Loading','در حال ذخیره':'Saving','در حال حذف':'Deleting','در حال اتصال':'Connecting',
+    'خطایی رخ داد':'An error occurred','عملیات انجام شد':'Operation completed','عملیات ناموفق بود':'Operation failed',
+    'بله':'Yes','خیر':'No','تغییرات ذخیره شد':'Changes saved','اطلاعات ذخیره شد':'Information saved',
+    'آدرس پنل':'Panel address','آدرس دامنه':'Domain address','دامنه عمومی':'Public domain','پورت عمومی':'Public port',
+    'پورت پنل':'Panel port','وضعیت اتصال':'Connection status','آخرین فعالیت':'Last activity','آخرین همگام‌سازی':'Last sync',
+    'رمز عبور':'Password','وارد کردن رمز عبور':'Enter password','تأیید رمز عبور':'Confirm password',
+    'تصویر':'Image','انتخاب تصویر':'Choose image','انتخاب از گالری':'Choose from gallery','آپلود تصویر':'Upload image',
+    'شبکه خصوصی':'Private network','همه چیز آماده است':'Everything is ready','خودکار':'Automatic',
+    'شناسایی خودکار':'Automatic detection','راه‌اندازی سریع نود':'Quick node setup','اتصال خودکار':'Automatic connection',
+    'خطا در اتصال':'Connection error','دامنه نود':'Node domain','نام دامنه':'Domain name','وضعیت نودها':'Node status',
+    'گزینه را انتخاب کنید':'Select an option','مقدار نامعتبر':'Invalid value','شناسه نامعتبر':'Invalid ID',
+    'پاسخ نود':'Node response','پاسخ دریافت نشد':'No response received','در دسترس نیست':'Unavailable',
+    'تنظیم نشده':'Not set','پیکربندی نشده':'Not configured','موقتاً غیرفعال':'Temporarily disabled',
+    'خروج از حساب؟':'Log out?','خروج از حساب':'Log out','تغییر تصویر پروفایل':'Change profile picture',
+    'تصویر ذخیره شد':'Image saved','تصویر پروفایل ذخیره شد':'Profile picture saved','کپی همه متغیرها':'Copy all variables',
+    'متغیرها':'Variables','داده‌های نمونه':'Sample data','خالی است':'is empty',
+    'بازنشانی وضعیت':'Reset status','ورودی':'Input','خروجی':'Output','زمان اجرا':'Runtime',
+    'تصویر این لینک روی صفحهٔ اشتراک':'This link’s image on the subscription page',
+    'تصویر این کاربر روی صفحهٔ اشتراک':'This user’s image on the subscription page',
+    'تصویر این کاربر روی لینک اشتراک':'This user’s image on the subscription link',
+    'همهٔ کانفیگ‌های این کاربر':'All configs for this user','همه کانفیگ‌های این کاربر':'All configs for this user',
+    'هیچ کانفیگی':'No configs','کپی لینک':'Copy link','کانفیگ‌های لینک اشتراک':'Subscription link configs',
+    'هر کدام را تیک بزنی، داخل همین لینک اشتراک می‌آید.':'Select the configs to include in this subscription link.',
+    'اگر همه تیک بخورند یعنی «همه» (کانفیگ‌هایی که بعداً به این کاربر اضافه شوند هم می‌آیند).':'Selecting all also includes configs added to this user later.',
+    'تصویر کاربر ذخیره شد':'User image saved','لینک کپی شد':'Link copied','اول دامنهٔ نود را بزن':'Enter the node domain first',
+    'در حال شناسایی':'Detecting…','شناسایی نشد:':'Not detected:','نود TiTaN شناسایی شد':'TiTaN node detected',
+    'این آدرس جواب می‌دهد ولی TiTaN نیست':'This address responds, but it is not TiTaN','دستی اضافه کن':'Add manually',
+    'شناسایی خودکار ممکن نشد':'Automatic detection failed','دستی پر کن؛ بعد از ذخیره، متغیرها را با یک دکمه کپی می‌کنی.':'Fill this in manually; after saving, copy the variables with one click.',
+    'نود شناسایی شد':'Node detected','شناسایی خودکار انجام نشد':'Automatic detection failed',
+    'دسترسی خودکار داده شد — نیازی به متغیر نیست ✓':'Automatic access granted — no variables needed ✓',
+    'دسترسی خودکار نشد':'Automatic access failed','متغیرها را ست کن':'Set the variables',
+    'اگر نود خودکار وصل شد، همین‌جا کارت تمام است. اگر نه، این متغیرها را روی سرویسِ نود بگذار و یک‌بار دیپلوی کن.':'If the node connected automatically, you’re done. Otherwise, set these variables on the node service and redeploy.',
+    'ویرایش سرور':'Edit server','افزودن سرور':'Add server','دامنهٔ نود یا نام را بزن':'Enter the node domain or name',
+    'نود جواب نداد (':'Node did not respond (',') — کانفیگ‌ها موقتاً از پنل سرو می‌شوند':') — configs will temporarily be served by the panel',
+    'نود خودکار شناسایی و وصل شد ✓':'Node detected and connected automatically ✓',
+    'نود اضافه شد و کاربرانش را گرفت ✓':'Node added and its users synced ✓','نود اعتبارنامه‌اش را نگرفته':'Node has not received its credential',
+    'آخرین همگام‌سازی موفق نبود:':'Last sync failed:','هنوز هیچ همگام‌سازی موفقی نداشته':'No successful sync yet',
+    '— تا آماده شدنش، کانفیگ از پنل سرو می‌شود (تایم‌اوت نمی‌کند).':'— the panel serves the config until it is ready (no timeout).',
+    'الان آنلاین نیست، ولی کاربر روی آن ثبت می‌شود.':'It is offline now, but the user will still be assigned to it.',
+    'روی ':'On ','سرو می‌شود (':'is served (','آنلاین':'Online','نامعلوم':'Unknown',
+    'ویرایش کاربر / کانفیگ':'Edit user / config','افزودن کاربر / کانفیگ':'Add user / config',
+    'انتقال':'Transport','متد Shadowsocks':'Shadowsocks method','امنیت':'Security','حجم':'Quota',
+    'حجم به گیگابایت':'Quota in gigabytes','انقضای روز':'Expiry (days)','یادداشت':'Note','یادداشت (اختیاری)':'Note (optional)',
+    'شناسه کاربر':'User ID','رمز عبور جدید':'New password','نام*':'Name*','شهر':'City','کشور':'Country',
+    'کد کشور':'Country code','پرچم':'Flag','آدرس سرور':'Server address','آدرس یا دامنه نود':'Node address or domain',
+    'خودکار (نزدیک‌ترین)':'Auto (nearest)','خودکار (نزدیک‌ترین نودِ آنلاین و همگام‌شده)':'Auto (nearest online, synced node)',
+    'خودکار = نزدیک‌ترین نودِ آنلاین و همگام‌شده.':'Auto = nearest online, synced node.',
+    'این نود در حالت نگهداری است — کانفیگ از پنل سرو می‌شود.':'This node is in maintenance mode — the panel serves the config.',
+    'آخرین تماس: ':'Last contact: ','آخرین همگام‌سازی ناموفق بود':'The last sync failed',
+    'همگام‌سازی قدیمی است':'Sync is stale','یک بار همگام‌سازی فوری بزن.':'Run a sync now.',
+    'وضعیت همگام‌سازی هنوز اندازه‌گیری نشده است.':'Sync status has not been measured yet.',
+    'حذف لینک':'Delete link','بررسی شد':'Checked','نود شناسایی شد و کاربرانش را گرفت ✓':'Node detected and its users synced ✓',
+    'وصل نشد — متغیرها را ببین':'Could not connect — check the variables','همگام‌سازی شد':'Synced',
+    'به حالت نگهداری رفت':'Maintenance mode enabled','از حالت نگهداری خارج شد':'Maintenance mode disabled',
+    'بررسی اتصال نودها':'Check node connections','مدیریت سرورها':'Manage servers','تأیید':'Confirm',
+    'افزودن':'Add','ایجاد':'Create','کاربران فعال':'Active users','مصرف کل':'Total usage','تعداد کاربران':'User count',
+    'تعداد نودها':'Node count','میانگین تأخیر':'Average latency','پایداری':'Stability','ترافیک':'Traffic',
+    'دانلود':'Download','آپلود':'Upload','نزدیک به انقضا':'Expiring soon','پروتکل‌های استفاده‌شده':'Used protocols',
+    'روز قبل':'days ago','حساب':'account','مورد':'items','بار':'times','نود':'Node','نودها':'Nodes',
+    'کاربران':'Users','کانفیگ':'Config','کانفیگ‌ها':'Configs','سرور':'Server','سرورها':'Servers',
+    'مدیریت':'Management','اشتراک':'Subscription','اشتراک‌ها':'Subscriptions','گزارش':'Report',
+    'خطا':'Error','موفق':'Successful','فعال':'Active','غیرفعال':'Disabled','خاموش':'Disabled',
+    'منقضی':'Expired','آنلاین':'Online','آفلاین':'Offline','وضعیت':'Status','نام':'Name','شهر':'City',
+    'کشور':'Country','کد کشور':'Country code','پرچم':'Flag','دلیل':'Reason','زمان':'Time','تاریخ':'Date',
+    'ورود':'Sign in','ذخیره':'Save','لغو':'Cancel','بستن':'Close','حذف':'Delete','ویرایش':'Edit',
+    'کپی':'Copy','تأیید':'Confirm','نامشخص':'Unknown','نامعلوم':'Unknown','فعالیت':'Activity',
+    'تعداد':'Count','حداکثر':'Maximum','سطح':'Level','فهرست':'List','کاربردی':'Useful','سریع':'Quick',
+    'اعلان':'Notification','ورود جدید':'New sign-in','پشتیبانی':'Support','گالری':'Gallery',
+    'بازنشانی':'Reset','بازیابی':'Restore','پشتیبان':'Backup','پورت':'Port','زبان':'Language',
+    'دامنه':'Domain','سرویس':'Service','شبکه':'Network','سیستم':'System','داده':'Data','موقت':'Temporary',
+    'پیش‌فرض':'Default','اختیاری':'Optional','بازه':'Interval','طول':'Length','تغییر':'Change',
+    'کاربرها':'Users','مدیران':'Admins','مدیر':'Admin','مجوز':'Permission','مجاز':'Allowed',
+    'حریم خصوصی':'Privacy','نشست':'Session','همزمان':'Concurrent','کاهش':'Reduce','بررسی':'Check',
+    'اتصال':'Connection','آدرس':'Address','مقصد':'Destination','فعلی':'Current','نزدیک‌ترین':'Nearest',
+    'سرو می‌شود':'is served','موجود نیست':'not available','انتخاب':'Select','موردی':'No items','اشتباه':'Incorrect',
+    'پاسخ':'Response','در حال':'In progress','هیچ':'No','این':'This','همه':'All','برای':'for','از':'of',
+    'تا':'to','با':'with','و':'and','یا':'or','بر':'on','در':'in','به':'to','را':'',
+    'مجموع':'Total','دریافت':'Receive','ارسال':'Send','پردازنده':'CPU','حافظه':'Memory','دیسک':'Disk',
+    'نسخه':'Version','نگهداری':'Maintenance','پایداری':'Uptime','ترافیک مصرفی':'Traffic used',
+    'فعال‌سازی':'Enable','غیرفعال‌سازی':'Disable','درصد':'Percent','نامحدود':'Unlimited','هرگز':'Never',
+    'دقیقه':'minutes','ثانیه':'seconds','ساعت':'hours','روز':'days','ماه':'months','سال':'years',
+    'همگام‌سازی':'Sync','راز مشترک':'shared secret','گذشته':'ago','اخیر':'recent',
+    'پینگ‌سنج — اندازه‌گیری از همین دستگاه':'Ping tester — measure from this device',
+    'هر لینکی که روی ':'Every link hosted on ',' سرو شود، ':' is served, ',
+    ' دورتر از یک سرور نزدیک شماست — این همان چیزی است که «پینگِ قبلاً کمتر بود» را توضیح می‌دهد.':'farther than a nearby server — explaining why the ping used to be lower.',
+    '؛ تا کفِ ممکن ≈ ':'; the gap to the minimum possible is ≈ ',
+    'فاصله دارد. یک نود در همان شهرِ نزدیک (امارات/ترکیه) این فاصله را حذف می‌کند.':'away. A node in the same nearby city (UAE/Türkiye) would remove the gap.',
+    'کلید نود تنظیم شده است (':'Node key is configured (','کلید نود تنظیم نشده':'Node key is not configured',
+    'با زدن «ذخیره» خودکار وصل می‌شود ✓':'It connects automatically when you save ✓',
+    'اگر وصل نشد، متغیرها را ست کن':'If it does not connect, set the variables',
+    'هیچ‌کدام':'None','خاموش کردن':'Turn off','روشن کردن':'Turn on',
+    'شناسایی و اتصال خودکار (دامنه کافی است)':'Auto-detect and connect (domain only)',
+    'همگام‌سازی فوری':'Sync now','خروج از حالت نگهداری':'Exit maintenance mode','حالت نگهداری':'Maintenance mode',
+    'اپ‌تایم':'Uptime','کاربر روی نود:':'User on node:','انصراف':'Cancel',
+    'لوگوی TiTaN':'TiTaN logo','آپلود عکس':'Upload image','پروفایل کاربر — مثل قبل':'User profile — as before',
+    'فینگرپرینت':'Fingerprint','حد دستگاه':'Device limit','حد درخواست':'Request limit',
+    'IPهای مجاز (با کاما جدا کن، CIDR هم قبول است)':'Allowed IPs (comma-separated; CIDR is supported)',
+    'کپی همهٔ متغیرها با یک کلیک':'Copy all variables with one click',
+    'کپی همه (آماده برای Raw Editor)':'Copy all (ready for Raw Editor)',
+    'عنوان پلن (زیر نام کاربر روی همان صفحه)':'Plan title (below the user name on that page)',
+    'دامنهٔ سرویس نود (کافی است)':'Node service domain (that is enough)',
+    'کد کشور (2 حرف)':'Country code (2 letters)',
+    'اگر خالی بماند، تصویر خودِ کاربر روی صفحهٔ اشتراک می‌آید':'If left blank, the user’s own image appears on the subscription page',
+    'از بین کانفیگ‌های ساخته‌شده انتخاب کن؛ هر چیزی که تیک بخورد داخل همین لینک می‌آید. یک کاربر می‌تواند چند کانفیگ داشته باشد و چند کاربر می‌توانند در یک لینک جمع شوند.':'Choose from existing configs; selected items go into this link. A user may have multiple configs, and several users can share one link.',
+    'هر کدام را تیک بزنی، داخل همین لینک اشتراک می‌آید. اگر همه تیک بخورند یعنی «همه» (کانفیگ‌هایی که بعداً به این کاربر اضافه شوند هم خودکار می‌آیند).':'Select configs for this link. Selecting all also includes configs added to this user later.',
+    'دامنه را بزن و ذخیره کن: نام، شهر، پرچم و کلید نود خودکار تشخیص داده می‌شود. اگر شناسایی ممکن نشد، فیلدهای دستی را پر کن و بعد متغیرها را با یک دکمه کپی کن.':'Enter the domain and save: the name, city, flag, and node key will be detected automatically. If detection fails, fill in the fields manually and copy the variables with one click.',
+    'آخرین همگام‌سازی ناموفق بود (':'Last sync failed (',
+    ') — کاربران این نود از پنل سرو می‌شوند؛ توکن نود را روی خودِ نود ست کن (دکمهٔ ویرایش).':') — this node’s users are served by the panel; set its node token on the node itself (Edit button).',
+    'تصویر این لینک':'This link’s image','تصویر این کاربر':'This user’s image',
+    'ساخت/ویرایش کانفیگ‌های این لینک':'Create/edit configs for this link',
+    'کپی لینک اشتراک (برای کلاینت‌ها)':'Copy the subscription link (for clients)',
+    'کپی لینک صفحهٔ اشتراک (برای کاربر)':'Copy the subscription page link (for the user)',
+    'غیرفعال کردن':'Disable','فعال کردن':'Enable','کل':'Total','پروتکل‌ها':'Protocols',
+    // Remaining live modal/toast copy found in the Dashboard dynamic-text audit.
+    'انگلیسی':'English','اثر انگشت':'Fingerprint','اصلی':'Main','لینک':'Link','فرگمنت':'Fragment',
+    'آمستردام':'Amsterdam','بمبئی':'Mumbai',
+    'آمریکا — سن‌خوزه':'United States — San Jose','آمریکا — ویرجینیا':'United States — Virginia',
+    'هلند — آمستردام':'Netherlands — Amsterdam','هند — بمبئی':'India — Mumbai',
+    'امارات — دبی':'United Arab Emirates — Dubai','فرانسه — پاریس':'France — Paris',
+    'آدرسی ثبت نشده':'No address registered','هنوز کاربری ساخته نشده':'No users have been created yet',
+    'کانفیگی برای این کاربر ساخته نشده':'No configs have been created for this user',
+    'هیچ کانفیگی انتخاب نشده':'No config selected','ساخت لینک اشتراک':'Create subscription link',
+    'ویرایش لینک اشتراک':'Edit subscription link',
+    'نام اشتراک را بنویس':'Enter a subscription name','حداقل یک کانفیگ انتخاب کن':'Select at least one config',
+    'لینک ساخته شد و کپی شد ✓':'Subscription link created and copied ✓',
+    'پوش شد ✓':'pushed ✓','ذخیره شد، ولی نود قبول نکرد (':'Saved, but the node rejected it (',
+    ') — فعلاً از پنل سرو می‌شود':') — currently served by the panel',
+    'خام (TCP)':'Raw (TCP)','از مسیر HTTPS':'via HTTPS','راه‌اندازی این نود':'Set up this node',
+    'نود جواب داد و کاربرانش را گرفت ✓':'Node responded and synced its users ✓',
+    'این نود هنوز جواب نداده':'This node has not responded yet',
+    'تا آن موقع، کانفیگ‌های این نود روی خودِ پنل سرو می‌شوند (تایم‌اوت نمی‌کنند).':'Until then, this node’s configs are served by the panel (no timeout).',
+    'کپی شد':'Copied','همهٔ متغیرها کپی شد ✓':'All variables copied ✓',
+    'کپی نشد — دستی انتخاب کن':'Copy failed — select manually','فهمیدم':'Got it',
+    'کانفیگ خاموش شد':'Config turned off','کانفیگ روشن شد':'Config turned on','سرور اصلی':'Primary server',
+    'هنوز لینک اشتراکی ساخته نشده — با دکمهٔ بالا یکی بساز.':'No shared links yet — create one with the button above.',
+    'لینک صفحهٔ اشتراک کپی شد':'Subscription page link copied',
+    'تصویر این لینک برداشته شد':'This link’s image was removed','لینک غیرفعال شد':'Link disabled',
+    'لینک فعال شد':'Link enabled','این لینک اشتراک حذف شود؟':'Delete this subscription link?',
+    'تغییر رمز':'Change password','رمز جدید باید حداقل ۶ کاراکتر باشد':'Password must be at least 6 characters',
+    'رمز عبور تغییر کرد':'Password changed','رمز فعلی اشتباه است':'Current password is incorrect',
+    'بازیابی از پشتیبان؟':'Restore backup?','بازیابی شد':'Restored','راه‌اندازی مجدد پنل؟':'Restart the panel?',
+    'در حال راه‌اندازی...':'Starting…','در حال تست...':'Testing…','به‌روزرسانی شد':'Updated','خروج':'Log out'
+  });
+  const DASHBOARD_FA_KEYS=Object.keys(DASHBOARD_TEXT).filter(k=>/[\u0600-\u06ff]/.test(k)).sort((a,b)=>b.length-a.length);
+  const dashboardPhrase=source=>source.includes(' ')||/[—←→✓●⏻:：?!؟.,()]/.test(source);
+  const DASHBOARD_FA_PHRASES=DASHBOARD_FA_KEYS.filter(dashboardPhrase);
+  const DASHBOARD_FA_WORDS=DASHBOARD_FA_KEYS.filter(k=>!dashboardPhrase(k));
+  const DASHBOARD_EN_TO_FA=Object.freeze({
+    ...Object.fromEntries(Object.entries(DASHBOARD_TEXT).filter(([fa,en])=>/[\u0600-\u06ff]/.test(fa)&&typeof en==='string'&&en.length).map(([fa,en])=>[en,fa])),
+    'Dashboard':'داشبورد','Users':'کاربران','Configs':'کانفیگ‌ها','Servers':'سرورها',
+    'Subscriptions':'اشتراک‌ها','Reports':'گزارش‌ها','Settings':'تنظیمات','Tools':'ابزارها',
+    'Admin management':'مدیریت ادمین','Super Admin':'ادمین کل','Admin':'مدیر','Owner':'مدیر اصلی',
+    'Private network':'شبکه خصوصی','Private Network':'شبکه خصوصی','PRIVATE NETWORK':'شبکه خصوصی','English':'انگلیسی','Online':'آنلاین','Nodes':'نودها','Node':'نود','node':'نود','main':'اصلی',
+    'Active':'فعال','Inactive':'غیرفعال','Disabled':'غیرفعال','Expired':'منقضی','Offline':'آفلاین',
+    'Save':'ذخیره','Cancel':'لغو','Close':'بستن','Delete':'حذف','Copy':'کپی','Done':'انجام شد',
+    'Edit':'ویرایش','Language':'زبان','Panel language':'زبان پنل','Support':'پشتیبانی',
+    'sync':'همگام‌سازی','token':'توکن','shared secret':'راز مشترک',
+    'Loading…':'در حال بارگذاری…','No data available':'داده‌ای وجود ندارد','No items found':'موردی وجود ندارد'
+  });
+  const DASHBOARD_EN_KEYS=Array.from(new Set([
+    ...Object.keys(DASHBOARD_EN_TO_FA),
+    ...Object.keys(DASHBOARD_TEXT).filter(k=>k&&!/[\u0600-\u06ff]/.test(k)),
+    ...Object.values(DASHBOARD_TEXT).filter(v=>typeof v==='string'&&v&&!/[\u0600-\u06ff]/.test(v))
+  ])).filter(Boolean).sort((a,b)=>b.length-a.length);
+  const DASHBOARD_EN_PHRASES=DASHBOARD_EN_KEYS.filter(dashboardPhrase);
+  const DASHBOARD_EN_WORDS=DASHBOARD_EN_KEYS.filter(k=>!dashboardPhrase(k));
+  const dashboardTextOriginal=new WeakMap(),dashboardTextRendered=new WeakMap();
+  const dashboardAttrOriginal=new WeakMap(),dashboardAttrRendered=new WeakMap();
+  let dashboardLang='fa';
+  function replaceUiPhrase(text,source,target){
+    if(!source)return text;
+    const escaped=source.replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/ /g,'\\s+');
+    if(source.includes(' ')||/[—←→✓●⏻:：?!؟.,()]/.test(source)){
+      return text.replace(new RegExp(escaped,'gu'),target);
+    }
+    // Persian ZWNJ is part of a word; do not translate fragments such as
+    // "به" inside "به‌روزرسانی" when replacing standalone UI words.
+    const pattern=new RegExp('(^|[^\\p{L}\\p{N}\\u200c])'+escaped+'(?=$|[^\\p{L}\\p{N}\\u200c])','gu');
+    return text.replace(pattern,(_,prefix)=>prefix+target);
+  }
+  function dashboardText(value,lang=dashboardLang){
+    let text=String(value==null?'':value);
+    if(lang==='en'){
+      // Translate complete labels first; otherwise numeric fragments such as
+      // "7 days" would consume part of "Last 7 days" before its full phrase.
+      for(const fa of DASHBOARD_FA_PHRASES) text=replaceUiPhrase(text,fa,DASHBOARD_TEXT[fa]);
+      text=text.replace(/از\s*([0-9۰-۹]+)\s*کاربر/g,(_,n)=>`of ${n} ${String(n).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))==='1'?'user':'users'}`)
+               .replace(/از\s*([0-9۰-۹]+)\s*کانفیگ/g,'of $1 configs')
+               .replace(/([0-9۰-۹]+)\s*حساب/g,'$1 accounts')
+               .replace(/([0-9۰-۹]+)\s*مورد/g,'$1 items')
+               .replace(/([0-9۰-۹]+)\s*روز/g,'$1 days');
+      for(const fa of DASHBOARD_FA_WORDS) text=replaceUiPhrase(text,fa,DASHBOARD_TEXT[fa]);
+      text=text.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+    }else{
+      // Reverse whole labels before handling counts so toggling languages never
+      // leaves a half-translated phrase such as "Last 7 روز".
+      for(const en of DASHBOARD_EN_PHRASES) text=replaceUiPhrase(text,en,DASHBOARD_EN_TO_FA[en]||DASHBOARD_TEXT[en]);
+      text=text.replace(/of\s*([0-9]+)\s*users?/gi,(_,n)=>`از ${n} کاربر`)
+               .replace(/([0-9]+)\s*accounts?/gi,'$1 حساب')
+               .replace(/([0-9]+)\s*items?/gi,'$1 مورد')
+               .replace(/([0-9]+)\s*days?/gi,'$1 روز');
+      for(const en of DASHBOARD_EN_WORDS) text=replaceUiPhrase(text,en,DASHBOARD_EN_TO_FA[en]||DASHBOARD_TEXT[en]);
+    }
+    return text;
+  }
+  function translateDashboard(root){
+    if(!root||!document.body||typeof document.createTreeWalker!=='function'||typeof NodeFilter==='undefined')return;
+    const ignored='script,style,textarea,code,pre,[data-i18n-ignore]';
+    const translateNode=node=>{
+      if(!node||!node.nodeValue||!node.nodeValue.trim())return;
+      const parent=node.parentElement;
+      if(parent&&parent.closest(ignored))return;
+      // User-supplied names, plans, and locations are data, not interface copy.
+      if(parent&&parent.closest('.profile-name,.recent-name,.recent-server-name,.sr-name,.sr-loc,.plan,.config-user-name,.user-cell,.sub-user-name,.nl-name,.nl-loc,.node-location-data,.server-row .location'))return;
+      let original=dashboardTextOriginal.get(node);
+      if(original===undefined||dashboardTextRendered.get(node)!==node.nodeValue){
+        original=node.nodeValue;
+        dashboardTextOriginal.set(node,original);
+      }
+      const next=dashboardText(original);
+      if(next!==node.nodeValue)node.nodeValue=next;
+      dashboardTextRendered.set(node,next);
+    };
+    const attrs=['placeholder','title','aria-label','alt','data-tip','data-msg','data-demo'];
+    const translateElement=el=>{
+      if(!el||el.nodeType!==1||el.matches(ignored))return;
+      let originals=dashboardAttrOriginal.get(el),rendered=dashboardAttrRendered.get(el);
+      if(!originals){originals=new Map();dashboardAttrOriginal.set(el,originals);}
+      if(!rendered){rendered=new Map();dashboardAttrRendered.set(el,rendered);}
+      for(const attr of attrs){
+        if(!el.hasAttribute(attr))continue;
+        // The title on a server row is the admin-entered node name.
+        if(attr==='title'&&el.classList&&el.classList.contains('server-row'))continue;
+        const value=el.getAttribute(attr);
+        if(!originals.has(attr)||rendered.get(attr)!==value)originals.set(attr,value);
+        const next=dashboardText(originals.get(attr));
+        if(next!==value)el.setAttribute(attr,next);
+        rendered.set(attr,next);
+      }
+    };
+    if(root.nodeType===3){translateNode(root);return;}
+    if(root.nodeType===1)translateElement(root);
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    let node;while((node=walker.nextNode()))translateNode(node);
+    if(root.querySelectorAll){
+      root.querySelectorAll(attrs.map(a=>'['+a+']').join(',')).forEach(translateElement);
+    }
+  }
+  function applyDashboardLanguage(lang,persist=true){
+    dashboardLang=lang==='en'?'en':'fa';
+    document.documentElement.lang=dashboardLang;
+    document.documentElement.dir=dashboardLang==='fa'?'rtl':'ltr';
+    document.title=dashboardLang==='en'?'TiTaN — Private Network':'TiTaN — شبکه خصوصی';
+    if(persist){try{localStorage.setItem('titan-language',dashboardLang);localStorage.setItem('titan_lang',dashboardLang);}catch(_){}}
+    const selector=document.getElementById('dashboardLanguage');
+    if(selector)selector.value=dashboardLang;
+    translateDashboard(document.body);
+  }
+  function initDashboardLanguage(){
+    let saved='fa';try{saved=localStorage.getItem('titan-language')||localStorage.getItem('titan_lang')||'fa';}catch(_){}
+    applyDashboardLanguage(saved,false);
+    const selector=document.getElementById('dashboardLanguage');
+    if(selector)selector.addEventListener('change',()=>applyDashboardLanguage(selector.value));
+    if(typeof MutationObserver==='undefined'||!document.body)return;
+    const observer=new MutationObserver(records=>{
+      for(const record of records){
+        if(record.type==='characterData')translateDashboard(record.target);
+        else if(record.type==='attributes')translateDashboard(record.target);
+        else record.addedNodes.forEach(node=>translateDashboard(node));
+      }
+    });
+    observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt','data-tip','data-msg','data-demo']});
+  }
 
   // ── premium icon set (inline SVG, stroke = currentColor) ──────────────────
   const ICONS = {
@@ -37,7 +450,7 @@
     return `<button class="ico-btn${variant?' '+variant:''}" data-tip="${esc(tip)}" aria-label="${esc(tip)}" ${a}>${icon(name)}</button>`;
   }
 
-  function fmtDate(ts){ try{ return new Date(ts*1000).toLocaleDateString('fa-IR'); }catch(e){ return '—'; } }
+  function fmtDate(ts){ try{ return new Date(ts*1000).toLocaleDateString(dashboardLang==='en'?'en-GB':'fa-IR'); }catch(e){ return '—'; } }
   async function apiJson(url, opts={}){ opts.credentials='same-origin'; opts.headers=Object.assign({'Content-Type':'application/json'},opts.headers||{}); if(opts.body&&typeof opts.body!=='string') opts.body=JSON.stringify(opts.body); const r=await fetch(url,opts); let d={}; try{d=await r.json();}catch(e){ if(!r.ok) throw new Error(r.statusText); } if(!r.ok) throw new Error(d.detail||d.message||r.statusText); return d; }
 
   let toastEl=$('#titanToast');
@@ -94,11 +507,11 @@
     add('panel','پنل (همین آدرسی که باز است)','/healthz','same-origin',{hint:'لینک‌هایی که روی پنل سرو می‌شوند از همین مسیر می‌آیند'});
     nodes.forEach(n=>{
       const addr = String(n.address||'').replace(/\/+$/,'');
-      const label = (n.flag||'') + ' ' + (n.name||'node');
+      const label = nodeFlag(n) + ' ' + (n.name||(dashboardLang==='en'?'Node':'نود'));
       if(!addr){ add('n'+n.id, label, '', 'cors', {skip:'آدرسی ثبت نشده'}); return; }
       if(addr.indexOf('http://')===0){ add('n'+n.id, label, '', 'cors', {skip:'آدرس http است؛ از صفحهٔ https اندازه‌گیری نمی‌شود'}); return; }
       const base = addr.indexOf('http')===0 ? addr : 'https://'+addr;
-      add('n'+n.id, label+' (نود)', base+'/healthz', 'no-cors', {node:true});
+      add('n'+n.id, label+' ('+(dashboardLang==='en'?'node':'نود')+')', base+'/healthz', 'no-cors', {node:true});
     });
     add('cf','نزدیک‌ترین نقطهٔ Cloudflare','https://cp.cloudflare.com/generate_204','no-cors',{hint:'کفِ پینگ ممکن برای یک سرور نزدیکِ شما'});
 
@@ -107,7 +520,7 @@
       const val = r.skip ? '<span class="muted">—</span>'
                 : (r.result ? `<b class="lat-ms ${b[0]}">${r.result.ms}</b> <span class="muted">ms</span>`
                              : '<span class="lat-spin">…</span>');
-      return `<div class="lat-row" id="lat-${esc(r.key)}"><span class="lat-name"${r.hint?' data-tip="'+esc(r.hint)+'"':''}>${esc(r.name)}</span>`
+      return `<div class="lat-row" id="lat-${esc(r.key)}"><span class="lat-name"${r.node?' data-i18n-ignore':''}${r.hint?' data-tip="'+esc(r.hint)+'"':''}>${esc(r.name)}</span>`
            + `<span class="lat-val">${val}</span><span class="lat-tag pill ${b[0]}">${esc(r.skip||b[1])}</span></div>`;
     };
 
@@ -341,12 +754,12 @@
       const f = d.fields||{};
       const fill=(sel,val)=>{ const el=$(sel); if(el && !el.value && val) el.value=val; };
       fill('#mn_name', f.name||''); fill('#mn_city', f.city||''); fill('#mn_country', f.country||'');
-      fill('#mn_cc', f.country_code||''); fill('#mn_flag', f.flag||'');
+      fill('#mn_cc', f.country_code||''); fill('#mn_flag', nodeFlag(f));
       const nameEl=$('#mn_name'); if(nameEl && f.name && !nameEl.value) nameEl.value=f.name;
       if(box) box.innerHTML = `<div class="det-card">
         <div class="det-row"><span class="det-ok">✓ نود TiTaN شناسایی شد</span>
           <span class="muted" dir="ltr">v${esc(id.version||'?')} · ${esc(id.role||'node')}</span></div>
-        <div class="det-row"><span>${esc(id.flag||'🌐')} ${esc(id.city||'—')}${id.country_code?' · '+esc(id.country_code):''}</span>
+        <div class="det-row"><span>${esc(nodeFlag(id))} ${esc(id.city||'—')}${id.country_code?' · '+esc(id.country_code):''}</span>
           <span class="muted" dir="ltr">edge ${esc((id.edge||{}).scheme||'https')} :${esc(String((id.edge||{}).port||''))}</span></div>
         <div class="det-row"><span>${id.credential? 'کلید نود تنظیم شده است ('+esc(id.credential)+')' : 'کلید نود تنظیم نشده'}</span>
           <span class="${id.accepts_bootstrap?'det-ok':'det-bad'}">${id.accepts_bootstrap? 'با زدن «ذخیره» خودکار وصل می‌شود ✓' : 'اگر وصل نشد، متغیرها را ست کن'}</span></div>
@@ -471,7 +884,7 @@
     });
     const path = points.map((p,i)=> (i===0?`M${p.x} ${p.y}`:`L${p.x} ${p.y}`)).join(' ');
     const area = path + ` L${points[points.length-1].x} ${H - padB} L${points[0].x} ${H - padB} Z`;
-    const xLabels = daily.map(d=> new Date(d.t*1000).toLocaleDateString('fa-IR',{month:'short',day:'numeric'}));
+    const xLabels = daily.map(d=> new Date(d.t*1000).toLocaleDateString(dashboardLang==='en'?'en-GB':'fa-IR',{month:'short',day:'numeric'}));
     if(svgEl){
       svgEl.style.display='';
       svgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -521,7 +934,7 @@
           srvContent.innerHTML=nodes.slice(0,4).map(n=>{
             const st=n.status||{}; const lat=(st.latency_ms!=null?Number(st.latency_ms):null);
             const city=(n.city && n.city!=='—')?n.city:n.name; const cc=(n.country_code||'').toUpperCase();
-            const flag=n.flag||flagFor(cc)||'🌐'; const on=!!(n.enabled!==false && st.online);
+            const flag=nodeFlag(n); const on=!!(n.enabled!==false && st.online);
             const pc=!on?'off':(lat==null?'off':(lat<90?'good':(lat<200?'mid':'bad')));
             return `<div class="server-row" title="${esc(n.name)}"><div class="latency ping ${pc}">${lat!=null?lat+'ms':'—'}<small>تاخیر</small></div><div class="status ${on?'on':'off'}">${on?'آنلاین':'آفلاین'}</div><div class="location"><span class="sr-medal">${esc(flag)}</span><span><span class="sr-name">${esc(n.name)}</span><span class="sr-loc">${esc(city)}${cc?' · '+cc:''}</span></span></div></div>`;
           }).join('');
@@ -549,10 +962,10 @@
         if(recent.length===0) rcHead.insertAdjacentHTML('beforeend','<div style="padding:14px;color:#8586a8;font-size:11px">کانفیگی وجود ندارد.</div>');
         else recent.forEach(u=>{
           const av=(u.avatar_url||'/static/img/titan-avatar.svg'); const n=nodeMap[u.node_id||1];
-          const flag=n?(n.flag||flagFor(n.country_code)||'🌐'):'🌐'; const loc=n?((n.city && n.city!=='—')?n.city:n.name):'—';
+          const flag=n?nodeFlag(n):'🌐'; const loc=n?((n.city && n.city!=='—')?n.city:n.name):'—';
           const st=u.status||{}; const label=st.expired?'منقضی':(!u.enabled?'غیرفعال':'فعال');
           const row=document.createElement('div'); row.className='recent-table-row';
-          row.innerHTML=`<div class="recent-config"><span class="recent-avatar user-avatar"><img src="${esc(av)}" alt=""></span><span class="recent-name">${esc(u.name)}</span></div><div>${esc((u.protocol||'').toUpperCase())}</div><div class="recent-server"><span class="flag">${esc(flag)}</span><span>${esc(loc)}</span></div><div class="recent-status">${esc(label)}</div>`;
+          row.innerHTML=`<div class="recent-config"><span class="recent-avatar user-avatar"><img src="${esc(av)}" alt=""></span><span class="recent-name">${esc(u.name)}</span></div><div>${esc((u.protocol||'').toUpperCase())}</div><div class="recent-server"><span class="flag">${esc(flag)}</span><span class="recent-server-name">${esc(loc)}</span></div><div class="recent-status">${esc(label)}</div>`;
           rcHead.appendChild(row);
         });
       }
@@ -595,7 +1008,7 @@
     const nodes = nodesRes.nodes||[];
     const isEdit = !!existing;
     const u = existing || {};
-    const nodeOpts = '<option value="0">🌐 خودکار (نزدیک‌ترین)</option>' + nodes.map(n=>`<option value="${n.id}" ${String(u.node_id||0)===String(n.id)?'selected':''}>${esc(n.flag||flagFor(n.country_code)||'🌐')} ${esc(n.name)}${(n.sync&&n.sync.ok===false)?' ⚠':''}</option>`).join('');
+    const nodeOpts = '<option value="0">🌐 خودکار (نزدیک‌ترین)</option>' + nodes.map(n=>`<option data-i18n-ignore value="${n.id}" ${String(u.node_id||0)===String(n.id)?'selected':''}>${esc(nodeFlag(n))} ${esc(n.name)}${(n.sync&&n.sync.ok===false)?' ⚠':''}</option>`).join('');
     const nodeInfo={}; nodes.forEach(n=>{ nodeInfo[String(n.id)]={name:n.name, local:!!n.is_local, enabled:n.enabled!==false,
       online:!!(n.status&&n.status.online), cred:!!(n.sync&&n.sync.has_credential), ok:(n.sync&&n.sync.ok)===true, err:(n.sync&&n.sync.error)||''}; });
     // Say what picking this server means *before* saving: a node that cannot take
@@ -863,7 +1276,7 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#a8a6bf">کد کشور (2 حرف)<input id="mn_cc" value="${esc(n.country_code||'')}" maxlength="2" style="text-transform:uppercase;background:rgba(10,20,39,.8);border:1px solid rgba(108,125,165,.18);border-radius:10px;color:#e9e6f6;padding:11px"></label>
-          <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#a8a6bf">پرچم<input id="mn_flag" value="${esc(n.flag||'')}" style="background:rgba(10,20,39,.8);border:1px solid rgba(108,125,165,.18);border-radius:10px;color:#e9e6f6;padding:11px"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:11px;color:#a8a6bf">پرچم<input id="mn_flag" value="${esc(nodeFlag(n))}" style="background:rgba(10,20,39,.8);border:1px solid rgba(108,125,165,.18);border-radius:10px;color:#e9e6f6;padding:11px"></label>
         </div>
         <div style="font-size:10px;color:#7d829d">دامنه را بزن و ذخیره کن: نام، شهر، پرچم و کلید نود خودکار تشخیص داده می‌شود. اگر شناسایی ممکن نشد، فیلدهای دستی را پر کن و بعد متغیرها را با یک دکمه کپی کن.</div>
       </div>
@@ -978,11 +1391,11 @@
           }
           if(tbody){
             tbody.innerHTML=users.length? users.map(u=>{
-              const n=nodeMap[u.node_id||1]; const loc=n?((n.city&&n.city!=='—')?n.city:n.name):'—'; const flag=n?(n.flag||flagFor(n.country_code)||'🌐'):'🌐';
+              const n=nodeMap[u.node_id||1]; const loc=n?((n.city&&n.city!=='—')?n.city:n.name):'—'; const flag=n?nodeFlag(n):'🌐';
               const st=u.status||{}; const label=st.expired?'منقضی':(!u.enabled?'غیرفعال':'فعال'); const cls=st.expired?'warn':(!u.enabled?'off':'');
               const on = !!u.enabled && !(st.expired);
               const port = (u.main_link||'').split('@')[1] ? (u.main_link||'').split('@')[1].split('/')[0] : '—';
-              return `<tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="${esc(u.avatar_url||'/static/img/titan-avatar.svg')}" alt=""></span>${esc(u.name)}</span></td><td>${esc((u.protocol||'').toUpperCase())} · ${esc((u.transport||'').toUpperCase())}</td><td>${esc(flag)} ${esc(loc)}</td><td dir="ltr" class="muted">${esc(port)}</td><td><span class="pill ${cls}">${esc(label)}</span></td><td><div class="row-actions">${icoBtn({"data-uid":u.uid,"data-act":"edit"},"edit","ویرایش کانفیگ","gold")}${icoBtn({"data-uid":u.uid,"data-act":"links"},"link","کپی لینک اتصال","violet")}${icoBtn({"data-uid":u.uid,"data-act":"qr"},"qr","QR code","")}${icoBtn({"data-uid":u.uid,"data-act":"power","data-on":on?1:0},"power",on?"خاموش کردن":"روشن کردن",on?"":"ok")}${icoBtn({"data-uid":u.uid,"data-act":"del"},"trash","حذف","danger")}</div></td></tr>`;
+              return `<tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="${esc(u.avatar_url||'/static/img/titan-avatar.svg')}" alt=""></span>${esc(u.name)}</span></td><td>${esc((u.protocol||'').toUpperCase())} · ${esc((u.transport||'').toUpperCase())}</td><td><span class="node-location-data">${esc(flag)} ${esc(loc)}</span></td><td dir="ltr" class="muted">${esc(port)}</td><td><span class="pill ${cls}">${esc(label)}</span></td><td><div class="row-actions">${icoBtn({"data-uid":u.uid,"data-act":"edit"},"edit","ویرایش کانفیگ","gold")}${icoBtn({"data-uid":u.uid,"data-act":"links"},"link","کپی لینک اتصال","violet")}${icoBtn({"data-uid":u.uid,"data-act":"qr"},"qr","QR code","")}${icoBtn({"data-uid":u.uid,"data-act":"power","data-on":on?1:0},"power",on?"خاموش کردن":"روشن کردن",on?"":"ok")}${icoBtn({"data-uid":u.uid,"data-act":"del"},"trash","حذف","danger")}</div></td></tr>`;
             }).join('') : '<tr><td colspan="6" style="text-align:center;color:#8586a8">کانفیگی وجود ندارد</td></tr>';
             tbody.querySelectorAll('[data-act="del"]').forEach(b=> b.addEventListener('click', async()=>{ const uid=b.dataset.uid; if(!confirm('حذف کانفیگ؟')) return; try{ await apiJson('/api/users/'+uid,{method:'DELETE'}); toast('حذف شد'); refreshConfigs(); loadOverview(); }catch(e){toast(e.message);} }));
             tbody.querySelectorAll('[data-act="links"]').forEach(b=> b.addEventListener('click', async()=>{ const uid=b.dataset.uid; try{ const d=await apiJson('/api/users/'+uid+'/links'); await navigator.clipboard.writeText(d.main_link||d.links[0]); toast('لینک کپی شد'); }catch(e){toast(e.message);} }));
@@ -1060,7 +1473,7 @@
           function nodeCard(n){
             const st=n.status||{}; const on=!!(n.enabled!==false && st.online);
             const lat=(st.latency_ms!=null?Number(st.latency_ms):null);
-            const cc=(n.country_code||'').toUpperCase(); const flag=n.flag||flagFor(cc);
+            const cc=(n.country_code||'').toUpperCase(); const flag=nodeFlag(n);
             const city=(n.city && n.city!=='—')?n.city:'';
             const loc=[city||n.name, cc].filter(Boolean).join(' · ');
             const sync=n.sync||{}; const stale=(sync.ok===true && sync.at && (Date.now()/1000 - sync.at)>900);
@@ -1072,7 +1485,7 @@
               <div class="nl-top">
                 <div class="nl-medal"><span class="fe">${esc(flag)}</span></div>
                 <div style="flex:1;min-width:0">
-                  <div class="nl-name"><span class="nl-orb ${on?'':'off'}"></span>${esc(n.name||'node')}</div>
+                  <div class="nl-name"><span class="nl-orb ${on?'':'off'}"></span>${esc(n.name||(dashboardLang==='en'?'Node':'نود'))}</div>
                   <div class="nl-loc">${esc(loc)}</div>
                 </div>
                 <span class="pill ${on?'':'off'}">${on?'آنلاین':'آفلاین'}</span>
@@ -1485,5 +1898,6 @@
     window.addEventListener('hashchange', handleHash); handleHash();
   });
 
+  initDashboardLanguage();
   window._titanRefresh=()=>{ loadOverview(); document.dispatchEvent(new Event('titan:refresh')); };
 })();
