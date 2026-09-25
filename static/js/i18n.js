@@ -1,0 +1,371 @@
+/* TiTaN i18n — fa/en dictionary */
+const I18N = (() => {
+  const dict = {
+    fa: {
+      // generic
+      save: 'ذخیره', cancel: 'انصراف', close: 'بستن', delete: 'حذف', edit: 'ویرایش',
+      copy: 'کپی', copied: 'کپی شد!', search: 'جستجو…', view_all: 'مشاهده همه',
+      confirm: 'تأیید', back: 'بازگشت', create: 'ایجاد', loading: 'در حال بارگذاری…',
+      error: 'خطا', ok: 'تأیید شد', no_data: 'داده‌ای موجود نیست', enabled: 'فعال',
+      disabled: 'غیرفعال', online: 'آنلاین', offline: 'آفلاین', unknown: 'نامشخص',
+      unlimited: 'نامحدود', never: 'هرگز', actions: 'عملیات', status: 'وضعیت',
+      all: 'همه', yes: 'بله', no: 'خیر', name: 'نام', date: 'تاریخ', ip: 'IP',
+      level: 'سطح', event: 'رویداد', details: 'جزئیات', total: 'مجموع',
+      // sidebar / nav
+      nav_dashboard: 'داشبورد', nav_users: 'کاربران', nav_configs: 'کانفیگ ها',
+      nav_nodes: 'سرورها (Nodes)', nav_subscriptions: 'اشتراک ها', nav_reports: 'گزارش ها',
+      nav_settings: 'تنظیمات', nav_admins: 'مدیریت ادمین', nav_tools: 'ابزارها',
+      nav_section_main: 'اصلی', nav_section_manage: 'مدیریت',
+      logout: 'خروج از حساب',
+      // topbar
+      search_placeholder: 'جستجو…', admin: 'مدیر', role_super: 'ادمین کل',
+      // dashboard
+      welcome_title: 'خوش آمدید، مدیر',
+      welcome_sub: 'نمای کلی سیستم TiTaN',
+      stat_active_users: 'کاربران فعال', stat_traffic: 'ترافیک مصرفی',
+      stat_servers: 'تعداد سرورها', stat_configs: 'کانفیگ های فعال',
+      stat_users_sub: 'از {n} کاربر', stat_traffic_sub: '↑ {up} · ↓ {down}',
+      stat_servers_sub: '{n} آنلاین', stat_configs_sub: 'از {n} کانفیگ',
+      chart_traffic: 'نمودار ترافیک', chart_sub_7d: 'مصرف در 7 روز گذشته',
+      today: 'امروز', days_ago: '{n} روز قبل',
+      chart_upload: 'آپلود', chart_download: 'دانلود',
+      server_status: 'وضعیت سرورها', recent_users: 'کاربران اخیر',
+      latest_configs: 'آخرین کانفیگ ها', view_all_servers: 'مشاهده همه سرورها',
+      view_all_users: 'مشاهده همه', ms: 'میلی‌ثانیه', type: 'نوع',
+      // users
+      users_title: 'کاربران', users_sub: 'مدیریت کاربران پنل',
+      add_user: 'کاربر جدید', user: 'کاربر', traffic_used: 'ترافیک مصرفی',
+      expiry: 'انقضا', quota: 'حجم', protocol: 'پروتکل', transport: 'انتقال',
+      security: 'امنیت', fingerprint: 'Fingerprint', alpn: 'ALPN',
+      max_devices: 'حداکثر دستگاه', allowed_ips: 'IPهای مجاز (جدا با ویرگول)',
+      expire_days: 'روز اعتبار (۰ = نامحدود)', quota_gb: 'حجم به گیگابایت (۰ = نامحدود)',
+      max_requests: 'سقف درخواست (۰ = نامحدود)', note: 'یادداشت',
+      links: 'لینک‌ها', qr: 'QR', toggle: 'فعال/غیرفعال', reset_usage: 'صفر کردن مصرف',
+      regenerate: 'تغییر UUID', expired: 'منقضی شده', inactive: 'غیرفعال',
+      delete_confirm_user: 'مطمئن هستید این کاربر حذف شود؟',
+      rotate_confirm: 'UUID جدید ساخته شود؟ لینک‌های قبلی بی‌اثر می‌شوند.',
+      no_users: 'هنوز کاربری ایجاد نشده است',
+      no_users_sub: 'برای شروع، اولین کاربر را بسازید',
+      filter_status: 'فیلتر وضعیت', filter_protocol: 'فیلتر پروتکل',
+      user_details: 'جزئیات کاربر', user_created: 'کاربر ساخته شد', user_updated: 'کاربر ویرایش شد',
+      // configs
+      configs_title: 'کانفیگ‌ها', configs_sub: 'مدیریت کانفیگ‌های اتصال',
+      new_config: 'ساخت کانفیگ جدید', config: 'کانفیگ', config_name: 'نام کانفیگ',
+      user_owner: 'کاربر', node: 'سرور', created: 'تاریخ ایجاد',
+      no_configs: 'هنوز کانفیگی ساخته نشده است',
+      wizard_main: 'اطلاعات اصلی', wizard_server: 'سرور', wizard_network: 'شبکه',
+      wizard_security: 'امنیت', wizard_limits: 'محدودیت‌ها', wizard_preview: 'پیش‌نمایش',
+      preview_summary: 'خلاصه کانفیگ', preview_hint: 'لینک اتصال پس از ساخت نمایش داده می‌شود.',
+      select_node: 'انتخاب سرور', config_created: 'کانفیگ ساخته شد',
+      // nodes
+      nodes_title: 'سرورها (Nodes)', nodes_sub: 'مدیریت سرورها و وضعیت آن‌ها',
+      add_node: 'افزودن سرور', city: 'شهر', country: 'کشور', country_code: 'کد کشور',
+      address: 'آدرس سرور', latency: 'تأخیر', cpu: 'پردازنده', ram: 'حافظه', disk: 'دیسک',
+      version: 'نسخه', last_seen: 'آخرین فعالیت', local_node: 'سرور اصلی',
+      maintenance: 'نگهداری', ping: 'بررسی اتصال', node_view: 'مشاهده',
+      no_nodes: 'هنوز هیچ سروری اضافه نشده است', no_nodes_sub: 'سرورهای خود را از اینجا مدیریت کنید',
+      delete_confirm_node: 'این سرور حذف شود؟',
+      node_created: 'سرور اضافه شد', node_updated: 'سرور ویرایش شد',
+      node_auto: 'خودکار (نزدیک‌ترین سرور)', ss_method: 'روش رمزنگاری SS',
+      wg_config: 'کانفیگ WireGuard', wg_download: 'دانلود .conf',
+      node_sync_users: 'کاربر همگام‌سازی‌شده', node_sync_now: 'همگام‌سازی فوری',
+      node_synced: 'همگام‌سازی شد', node_no_credential: 'بدون توکن — همگام‌سازی غیرفعال',
+      node_sync_lag: 'عقب‌تر از انتظار',
+      node_token_title: 'توکن اتصال نود', node_token_hint: 'این متغیرها را روی سرویس نود (Railway) تنظیم کنید تا نود کاربران را دریافت کند. توکن فقط یک‌بار نمایش داده می‌شود.',
+      node_no_address: 'نود هنوز ثبت نشده (آدرس ندارد)', reason: 'دلیل',
+      node_addr_hint: 'فقط دامنه یا IP را وارد کنید (پورت اختیاری) — نیازی به https:// نیست؛ خودِ پنل تصحیح می‌کند.',
+      node_add_auto: 'راه‌اندازی سریع نود', node_auto_title: 'راه‌اندازی سریع نود (خودکار)',
+      node_name_hint: 'مثلاً: US East — می‌توانید خالی بگذارید',
+      node_invite_gen: 'ساخت توکن راه‌اندازی',
+      node_invite_steps: 'برای اتصال نود، این مراحل را انجام دهید:',
+      node_step1: 'در Railway یک سرویس جدید از همین ریپازیتوری بسازید.',
+      node_step2: 'این متغیرها را در تب Variables سرویس قرار دهید (دکمه «کپی همه»).',
+      node_step3: 'برای سرویس یک دامنه بسازید (Settings → Networking → Generate Domain)، سپس «بررسی ثبت» را بزنید.',
+      node_copy_all: 'کپی همه متغیرها', node_check: 'بررسی ثبت نود',
+      node_waiting: 'هنوز ثبت نشده — مطمئن شوید سرویس دیپلوی شده و دامنه دارد؛ کمی صبر کنید.',
+      node_registered: 'نود با موفقیت وصل شد', node_gen_fail: 'ساخت توکن ناموفق بود',
+      // subscriptions
+      subs_title: 'اشتراک‌ها', subs_sub: 'مدیریت اشتراک‌های کاربران',
+      sub_link: 'لینک اشتراک', sub_status: 'وضعیت اشتراک', config_count: 'تعداد کانفیگ',
+      copy_sub: 'کپی لینک اشتراک', view: 'مشاهده', revoke: 'ابطال',
+      no_subs: 'اشتراکی وجود ندارد',
+      // reports
+      reports_title: 'گزارش‌ها', reports_sub: 'تحلیل و آمار عملکرد پنل',
+      rep_total_traffic: 'کل ترافیک', rep_users: 'کاربران', rep_active: 'کاربران فعال',
+      rep_expired: 'منقضی‌شده', rep_disabled: 'غیرفعال',
+      rep_protocol_dist: 'توزیع پروتکل‌ها', rep_top_users: 'کاربران پر مصرف',
+      rep_days_7: '۷ روز', rep_days_14: '۱۴ روز', rep_days_30: '۳۰ روز',
+      rep_traffic: 'ترافیک مصرفی',
+      // settings
+      settings_title: 'تنظیمات', settings_sub: 'پیکربندی عمومی پنل',
+      sec_general: 'عمومی', sec_security: 'امنیت', sec_appearance: 'ظاهر',
+      sec_notifications: 'اعلان‌ها', sec_network: 'شبکه', sec_system: 'سیستم',
+      sec_backup: 'پشتیبان‌گیری',
+      set_public_domain: 'دامنه عمومی (اختیاری)',
+      
+      
+      
+      
+      
+      set_change_password: 'تغییر رمز عبور', set_old_password: 'رمز عبور فعلی',
+      set_new_password: 'رمز عبور جدید', set_notify_conn: 'اعلان اتصال جدید',
+      set_transport: 'پروتکل انتقال پیش‌فرض', set_fingerprint: 'Fingerprint پیش‌فرض',
+      set_alpn: 'ALPN پیش‌فرض', set_sni: 'SNI سفارشی (اختیاری)',
+      set_fragment: 'فعال‌سازی Fragment',
+      set_fragment_hint: 'این دو عدد به‌صورت `fp_len` و `fp_int` به انتهای لینک اضافه می‌شوند؛ خودِ کلاینت هم باید Fragment را از تنظیماتش روشن کند (v2rayNG/Hiddify: Fragment = tlshello).',
+      set_fragment_length: 'طول Fragment', set_fragment_interval: 'بازه Fragment',
+      set_restrict_ips: 'مسدودسازی IPهای خصوصی', set_block_ads: 'مسدودسازی تبلیغات',
+      set_block_iran: 'مسدودسازی سایت‌های ایرانی',
+      set_backup_auto: 'پشتیبان‌گیری خودکار', set_backup_interval: 'بازه پشتیبان‌گیری (ساعت)',
+      default_auth_warn: 'رمز عبور هنوز تنظیم نشده است — برای امنیت، یک رمز تعیین کنید',
+      password_optional: 'رمز عبور (اختیاری در حالت پیش‌فرض)',
+      set_backup_download: 'دانلود پشتیبان', set_backup_restore: 'بازیابی از پشتیبان',
+      set_restart: 'راه‌اندازی مجدد پنل', restart_confirm: 'پنل راه‌اندازی مجدد شود؟',
+      restore_confirm: 'دیتابیس فعلی با فایل انتخابی جایگزین می‌شود. ادامه؟',
+      settings_saved: 'تنظیمات ذخیره شد', password_changed: 'رمز عبور تغییر کرد',
+      wrong_old_password: 'رمز عبور فعلی اشتباه است',
+
+      // admins
+      admins_title: 'مدیریت ادمین', admins_sub: 'حساب‌های مدیر و سطوح دسترسی',
+      role: 'نقش', last_login: 'آخرین ورود', permissions: 'دسترسی‌ها',
+      audit_log: 'گزارش فعالیت', clear_logs: 'پاک کردن گزارش',
+      account_info: 'اطلاعات حساب', created_at: 'تاریخ ایجاد',
+      // tools
+      tools_title: 'ابزارها', tools_sub: 'ابزارهای تشخیصی و مدیریتی سیستم',
+      diag: 'تشخیص سیستم', health: 'وضعیت سلامت', sysinfo: 'اطلاعات سیستم',
+      conn_diag: 'تشخیص اتصال سرورها', logs: 'گزارش رویدادها',
+      uptime: 'آپ‌تایم', xray_status: 'وضعیت Xray', app_version: 'نسخه برنامه',
+      running: 'در حال اجرا', not_running: 'اجرا نشده',
+      // avatar gallery (profile pictures)
+      sec_avatar: 'تصویر پروفایل',
+      avatar_saved: 'تصویر پروفایل ذخیره شد',
+      avatar_hint: 'برای خود و کاربران، از گالری یک تصویر انتخاب کنید. پیش‌فرض لوگوی TiTaN است.',
+      gallery_title: 'گالری تصاویر',
+      gallery_choose: 'انتخاب از گالری',
+      gallery_upload: 'آپلود تصویر جدید',
+      gallery_use_logo: 'استفاده از لوگوی TiTaN',
+      gallery_empty: 'هنوز تصویری در گالری نیست',
+      gallery_remove: 'حذف',
+      change_picture: 'تغییر تصویر',
+      avatar_user: 'تصویر پروفایل کاربر',
+      // raw TCP (Railway TCP proxy)
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+            // public access
+      set_public_domain: 'دامنه عمومی (اختیاری)', set_public_port: 'پورت عمومی لینک‌ها (پیش‌فرض 443)',
+      public_access_hint: 'دامنه‌ای که کلاینت‌ها برای اتصال استفاده می‌کنند؛ اگر خالی باشد از دامنهٔ درخواست استفاده می‌شود.',
+      // connection test
+      conn_test: 'تست اتصال', conn_test_run: 'اجرای تست', conn_testing: 'در حال بررسی…',
+      conn_xray: 'سرویس Xray', conn_config: 'فایل کانفیگ', conn_config_valid: 'اعتبار کانفیگ',
+      conn_domain: 'دامنه عمومی', conn_panel_http: 'پاسخ پنل', conn_ws_path: 'مسیر WebSocket',
+      conn_ok: 'برقرار', conn_fail: 'ناموفق', conn_not_configured: 'تنظیم نشده', conn_untested: 'آزمایش نشده',
+      // dashboard banners
+      xray_down_banner: 'سرویس Xray در حال اجرا نیست — کانفیگ‌های ساخته‌شده وصل نخواهند شد.',
+      xray_not_installed_banner: 'Xray-core نصب نشده است — کانفیگ‌ها کار نمی‌کنند.',
+      domain_not_set_banner: 'دامنه عمومی تنظیم نشده است — از تنظیمات آن را مشخص کنید تا لینک‌ها درست ساخته شوند.',
+      // misc
+      flag_placeholder: '🏳️', per_page: 'در هر صفحه',
+      prev: 'قبلی', next: 'بعدی',
+      empty_traffic: 'هنوز ترافیکی ثبت نشده است',
+      select_country: 'انتخاب کشور'  },
+    en: {
+      save: 'Save', cancel: 'Cancel', close: 'Close', delete: 'Delete', edit: 'Edit',
+      copy: 'Copy', copied: 'Copied!', search: 'Search…', view_all: 'View all',
+      confirm: 'Confirm', back: 'Back', create: 'Create', loading: 'Loading…',
+      error: 'Error', ok: 'Done', no_data: 'No data', enabled: 'Enabled',
+      disabled: 'Disabled', online: 'Online', offline: 'Offline', unknown: 'Unknown',
+      unlimited: 'Unlimited', never: 'Never', actions: 'Actions', status: 'Status',
+      all: 'All', yes: 'Yes', no: 'No', name: 'Name', date: 'Date', ip: 'IP',
+      level: 'Level', event: 'Event', details: 'Details', total: 'Total', type: 'Type',
+      nav_dashboard: 'Dashboard', nav_users: 'Users', nav_configs: 'Configs',
+      nav_nodes: 'Nodes', nav_subscriptions: 'Subscriptions', nav_reports: 'Reports',
+      nav_settings: 'Settings', nav_admins: 'Admins', nav_tools: 'Tools',
+      nav_section_main: 'Main', nav_section_manage: 'Management',
+      logout: 'Log out',
+      search_placeholder: 'Search…', admin: 'Admin', role_super: 'Super Admin',
+      welcome_title: 'Welcome, Admin',
+      welcome_sub: 'TiTaN system overview',
+      stat_active_users: 'Active users', stat_traffic: 'Traffic used',
+      stat_servers: 'Servers', stat_configs: 'Active configs',
+      stat_users_sub: 'of {n} users', stat_traffic_sub: '↑ {up} · ↓ {down}',
+      stat_servers_sub: '{n} online', stat_configs_sub: 'of {n} configs',
+      chart_traffic: 'Traffic chart', chart_sub_7d: 'Usage over the last 7 days',
+      today: 'Today', days_ago: '{n} days ago',
+      chart_upload: 'Upload', chart_download: 'Download',
+      server_status: 'Server status', recent_users: 'Recent users',
+      latest_configs: 'Latest configs', view_all_servers: 'View all servers',
+      view_all_users: 'View all', ms: 'ms',
+      users_title: 'Users', users_sub: 'Manage panel users',
+      add_user: 'New user', user: 'User', traffic_used: 'Traffic used',
+      expiry: 'Expiry', quota: 'Quota', protocol: 'Protocol', transport: 'Transport',
+      security: 'Security', fingerprint: 'Fingerprint', alpn: 'ALPN',
+      max_devices: 'Max devices', allowed_ips: 'Allowed IPs (comma separated)',
+      expire_days: 'Expiry days (0 = unlimited)', quota_gb: 'Quota in GB (0 = unlimited)',
+      max_requests: 'Max requests (0 = unlimited)', note: 'Note',
+      links: 'Links', qr: 'QR', toggle: 'Enable/Disable', reset_usage: 'Reset usage',
+      regenerate: 'Rotate UUID', expired: 'Expired', inactive: 'Inactive',
+      delete_confirm_user: 'Delete this user?',
+      rotate_confirm: 'Generate a new UUID? Previous links will stop working.',
+      no_users: 'No users yet', no_users_sub: 'Create your first user to get started',
+      filter_status: 'Filter by status', filter_protocol: 'Filter by protocol',
+      user_details: 'User details', user_created: 'User created', user_updated: 'User updated',
+      configs_title: 'Configs', configs_sub: 'Manage connection configs',
+      new_config: 'New config', config: 'Config', config_name: 'Config name',
+      user_owner: 'User', node: 'Node', created: 'Created',
+      no_configs: 'No configs yet',
+      wizard_main: 'Main info', wizard_server: 'Server', wizard_network: 'Network',
+      wizard_security: 'Security', wizard_limits: 'Limits', wizard_preview: 'Preview',
+      preview_summary: 'Config summary', preview_hint: 'The connection link will be shown after creation.',
+      select_node: 'Select server', config_created: 'Config created',
+      nodes_title: 'Nodes', nodes_sub: 'Manage servers and their status',
+      add_node: 'Add server', city: 'City', country: 'Country', country_code: 'Country code',
+      address: 'Server address', latency: 'Latency', cpu: 'CPU', ram: 'RAM', disk: 'Disk',
+      version: 'Version', last_seen: 'Last seen', local_node: 'Local server',
+      maintenance: 'Maintenance', ping: 'Ping', node_view: 'View',
+      no_nodes: 'No servers added yet', no_nodes_sub: 'Manage your servers from here',
+      delete_confirm_node: 'Delete this server?',
+      node_created: 'Server added', node_updated: 'Server updated',
+      node_auto: 'Auto (nearest server)', ss_method: 'SS cipher',
+      wg_config: 'WireGuard config', wg_download: 'Download .conf',
+      node_sync_users: 'Synced users', node_sync_now: 'Sync now',
+      node_synced: 'Synced', node_no_credential: 'No token — sync disabled',
+      node_sync_lag: 'behind expected',
+      node_token_title: 'Node token', node_token_hint: 'Set these variables on the node service (Railway) so it receives users. The token is shown only once.',
+      node_no_address: 'Node not registered yet (no address)', reason: 'Reason',
+      node_addr_hint: 'Just the domain or IP (optional :port) — no https:// needed; the panel normalizes it.',
+      node_add_auto: 'Quick node setup', node_auto_title: 'Quick node setup (automatic)',
+      node_name_hint: 'e.g. US East — you can leave it empty',
+      node_invite_gen: 'Generate setup token',
+      node_invite_steps: 'To connect the node, follow these steps:',
+      node_step1: 'Create a new service in Railway from this same repository.',
+      node_step2: 'Put these variables in the service\'s Variables tab ("Copy all").',
+      node_step3: 'Generate a domain for the service (Settings → Networking → Generate Domain), then press "Check registration".',
+      node_copy_all: 'Copy all variables', node_check: 'Check registration',
+      node_waiting: 'Not registered yet — make sure the service is deployed and has a domain; wait a moment.',
+      node_registered: 'Node connected successfully', node_gen_fail: 'Failed to create token',
+      subs_title: 'Subscriptions', subs_sub: 'Manage user subscriptions',
+      sub_link: 'Subscription link', sub_status: 'Subscription status', config_count: 'Config count',
+      copy_sub: 'Copy subscription', view: 'View', revoke: 'Revoke',
+      no_subs: 'No subscriptions',
+      reports_title: 'Reports', reports_sub: 'Panel performance analytics',
+      rep_total_traffic: 'Total traffic', rep_users: 'Users', rep_active: 'Active users',
+      rep_expired: 'Expired', rep_disabled: 'Disabled',
+      rep_protocol_dist: 'Protocol distribution', rep_top_users: 'Top users by usage',
+      rep_days_7: '7 days', rep_days_14: '14 days', rep_days_30: '30 days',
+      rep_traffic: 'Traffic used',
+      settings_title: 'Settings', settings_sub: 'General panel configuration',
+      sec_general: 'General', sec_security: 'Security', sec_appearance: 'Appearance',
+      sec_notifications: 'Notifications', sec_network: 'Network', sec_system: 'System',
+      sec_backup: 'Backup',
+      set_public_domain: 'Public domain (optional)',
+      
+      
+      
+      
+      
+      set_change_password: 'Change password', set_old_password: 'Current password',
+      set_new_password: 'New password', set_notify_conn: 'Notify on new connection',
+      set_transport: 'Default transport', set_fingerprint: 'Default fingerprint',
+      set_alpn: 'Default ALPN', set_sni: 'Custom SNI (optional)',
+      set_fragment: 'Enable Fragment',
+      set_fragment_hint: 'These two numbers are appended to the link as `fp_len` / `fp_int`; the client must also enable Fragment itself (v2rayNG/Hiddify: Fragment = tlshello).',
+      set_fragment_length: 'Fragment length', set_fragment_interval: 'Fragment interval',
+      set_restrict_ips: 'Block private IPs', set_block_ads: 'Block ads',
+      set_block_iran: 'Block Iranian sites',
+      set_backup_auto: 'Automatic backup', set_backup_interval: 'Backup interval (hours)',
+      default_auth_warn: 'No password set yet — set one for security',
+      password_optional: 'Password (optional in default mode)',
+      set_backup_download: 'Download backup', set_backup_restore: 'Restore from backup',
+      set_restart: 'Restart panel', restart_confirm: 'Restart the panel?',
+      restore_confirm: 'The current database will be replaced. Continue?',
+      settings_saved: 'Settings saved', password_changed: 'Password changed',
+      wrong_old_password: 'Current password is wrong',
+
+      admins_title: 'Admin management', admins_sub: 'Admin accounts and roles',
+      role: 'Role', last_login: 'Last login', permissions: 'Permissions',
+      audit_log: 'Activity log', clear_logs: 'Clear log',
+      account_info: 'Account info', created_at: 'Created',
+      tools_title: 'Tools', tools_sub: 'System diagnostics and management tools',
+      diag: 'System diagnostics', health: 'Health check', sysinfo: 'System info',
+      conn_diag: 'Server connection diagnostics', logs: 'Event log',
+      uptime: 'Uptime', xray_status: 'Xray status', app_version: 'App version',
+      running: 'Running', not_running: 'Not running',
+      // avatar gallery (profile pictures)
+      sec_avatar: 'Profile picture',
+      avatar_saved: 'Profile picture saved',
+      avatar_hint: 'Pick a picture from the gallery for yourself and users. The TiTaN logo is the default.',
+      gallery_title: 'Image gallery',
+      gallery_choose: 'Choose from gallery',
+      gallery_upload: 'Upload new image',
+      gallery_use_logo: 'Use the TiTaN logo',
+      gallery_empty: 'No images in the gallery yet',
+      gallery_remove: 'Remove',
+      change_picture: 'Change picture',
+      avatar_user: 'User profile picture',
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+            set_public_domain: 'Public domain (optional)', set_public_port: 'Public link port (default 443)',
+      public_access_hint: 'The domain clients connect to; if empty, the request domain is used.',
+      conn_test: 'Connection test', conn_test_run: 'Run test', conn_testing: 'Checking…',
+      conn_xray: 'Xray service', conn_config: 'Config file', conn_config_valid: 'Config validity',
+      conn_domain: 'Public domain', conn_panel_http: 'Panel response', conn_ws_path: 'WebSocket path',
+      conn_ok: 'OK', conn_fail: 'Failed', conn_not_configured: 'Not set', conn_untested: 'Untested',
+      xray_down_banner: 'Xray is not running — generated configs will not connect.',
+      xray_not_installed_banner: 'Xray-core is not installed — configs will not work.',
+      domain_not_set_banner: 'Public domain is not set — configure it in Settings so links are built correctly.',
+      flag_placeholder: '🏳️', per_page: 'per page',
+      prev: 'Prev', next: 'Next',
+      empty_traffic: 'No traffic recorded yet',
+      select_country: 'Select country'  }  };
+
+  let lang = localStorage.getItem('titan_lang') || 'fa';
+
+  function t(key, vars) {
+    let s = (dict[lang] && dict[lang][key]) || dict.fa[key] || key;
+    if (vars) Object.keys(vars).forEach(k => { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
+
+  function setLang(l) {
+    lang = l === 'en' ? 'en' : 'fa';
+    localStorage.setItem('titan_lang', lang);
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+    apply();
+  }
+
+  function apply() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (key) el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      if (key) el.setAttribute('placeholder', t(key));
+    });
+  }
+
+  return { t, setLang, apply, get lang() { return lang; } };
+})();

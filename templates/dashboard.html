@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TiTaN — Private Network</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --ink:#f5f4ff;--muted:#8d8eae;--bg:#040619;
+  --purple:#8f45ff;--blue:#4b9cff;--green:#31dcb9;--gold:#d9b55f;
+  --sidebar:250px;--gap:31px;
+}
+*{box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:"Vazirmatn",Tahoma,sans-serif;background:url("/static/img/titan-bg.png") center/cover no-repeat fixed;overflow-x:hidden}
+body::before{
+ content:"";position:fixed;inset:0;z-index:-3;background:url("/static/img/titan-bg.png") center/cover no-repeat;
+}
+body::after{
+ content:"";position:fixed;inset:0;z-index:-2;
+ background:linear-gradient(180deg,rgba(2,3,18,.18),rgba(2,4,20,.48)),
+            radial-gradient(circle at 50% 20%,rgba(65,25,165,.08),transparent 45%);
+}
+button,input{font:inherit}
+button{cursor:pointer}
+.icon{width:20px;height:20px;display:inline-grid;place-items:center;flex:none}
+.icon svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+
+.app{width:100%;min-height:100vh;padding:15px 10px;display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);gap:var(--gap);direction:ltr}
+.sidebar{direction:rtl;min-height:calc(100vh - 30px);border:1px solid rgba(128,105,235,.35);border-radius:17px;padding:19px 12px 14px;position:sticky;top:15px;overflow:hidden;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(7,9,34,.86),rgba(5,7,27,.73));backdrop-filter:blur(14px);box-shadow:0 0 32px rgba(52,24,150,.22),inset 0 1px rgba(255,255,255,.075),inset 0 0 28px rgba(145,110,255,.035)}
+.sidebar::after{content:"";position:absolute;left:-30px;right:-30px;bottom:-40px;height:220px;background:radial-gradient(ellipse,rgba(100,42,240,.20),transparent 68%);pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 21px;position:relative;z-index:1}
+.brand-logo{width:45px;height:45px;flex:none;border-radius:12px;overflow:hidden;position:relative;background:#090b2a;box-shadow:0 0 17px rgba(116,61,255,.24)}
+.brand-logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08)}
+.brand-name{font-size:23px;line-height:1;font-weight:700;letter-spacing:.3px}
+.brand-sub{font-size:8px;color:#8988ae;letter-spacing:1.5px;margin-top:5px}
+.nav{display:flex;flex-direction:column;gap:4px;position:relative;z-index:2}
+.nav-item{height:43px;border:1px solid transparent;border-radius:11px;background:transparent;color:#b0b0ca;padding:0 13px;display:flex;align-items:center;gap:12px;text-align:right;transition:.18s ease;font-size:14px;width:100%}
+.nav-item:hover{color:#fff;background:rgba(91,65,191,.15);border-color:rgba(130,102,230,.16)}
+.nav-item.active{color:#fff;background:linear-gradient(135deg,rgba(108,44,246,.92),rgba(71,29,171,.70));border-color:rgba(163,125,255,.63);box-shadow:0 0 16px rgba(115,48,246,.42),0 0 31px rgba(69,29,165,.18),inset 0 0 17px rgba(205,175,255,.08)}
+.sidebar-foot{margin-top:auto;position:relative;z-index:2}
+.version{height:83px;border:1px solid rgba(123,105,217,.30);border-radius:15px;padding:11px 11px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(19,20,57,.76),rgba(7,9,31,.48));box-shadow:inset 0 1px rgba(255,255,255,.07),inset 0 0 30px rgba(145,110,255,.035)}
+.version-logo{width:52px;height:52px;border-radius:13px;overflow:hidden;flex:none;background:#090b2a;box-shadow:0 0 16px rgba(108,53,234,.20)}
+.version-logo img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.08)}
+.version-copy{min-width:0;white-space:nowrap}.version-title{font-size:14px;font-weight:700}
+.version-v{font-size:10px;color:#8585a7;margin-top:1px}
+.online{font-size:10px;color:#9292ae;margin-top:4px;display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:#27e0a5;box-shadow:0 0 7px rgba(39,224,165,.85)}
+
+.main{direction:rtl;min-width:0}
+.header{height:77px;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;direction:ltr}
+.search-wrap{justify-self:center;margin-top:27px;direction:rtl}
+.search{width:338px;height:40px;border-radius:11px;border:1px solid rgba(112,96,212,.52);background:rgba(9,11,40,.59);backdrop-filter:blur(12px);display:flex;align-items:center;gap:8px;padding:0 12px;color:#aaa8cf;box-shadow:0 0 18px rgba(58,34,150,.15)}
+.search svg,.panel-title>svg{fill:none}
+.search input{border:0;outline:0;background:transparent;color:#eee;min-width:0;flex:1;font-size:12px}
+.search input::placeholder{color:#777799}
+.shortcut{font-size:9px;color:#8584a5;direction:ltr;white-space:nowrap}
+.actions{justify-self:end;display:flex;align-items:center;gap:12px;margin-top:26px;direction:rtl}
+.action{width:28px;height:31px;border:0;background:transparent;color:#c5c5df;display:grid;place-items:center;border-radius:8px;position:relative}
+.action svg{fill:none}.action:hover{background:rgba(125,88,238,.12);color:#fff}
+.action .icon{width:21px;height:21px}
+.badge{position:absolute;top:2px;right:1px;width:6px;height:6px;border-radius:50%;background:#eb5b92;box-shadow:0 0 7px rgba(235,91,146,.9)}
+.profile{display:flex;align-items:center;gap:9px;margin-right:3px;margin-left:2px}
+.avatar{width:43px;height:43px;border-radius:50%;overflow:hidden;background:#101335;border:1px solid rgba(126,108,221,.47);box-shadow:0 0 13px rgba(65,39,160,.20)}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.06)}
+.profile-name{font-size:11px;font-weight:700;line-height:1.5}
+.profile-role{font-size:9px;color:#8b8ca8}
+.profile-role .dot{display:inline-block;margin-left:4px}
+
+.welcome{height:91px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:4px 4px 13px;text-align:right}
+.welcome h1{margin:0;font-size:21px;font-weight:700}
+.welcome p{margin:6px 0 0;color:#7f80a7;font-size:11px}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;direction:rtl}
+.card{height:145px;border-radius:15px;position:relative;overflow:hidden;border:1px solid rgba(125,109,225,.33);backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);background:linear-gradient(145deg,rgba(20,22,58,.38),rgba(7,9,31,.30));box-shadow:0 14px 30px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.075),inset 0 0 28px rgba(145,110,255,.035)}
+.card::after{content:"";position:absolute;inset:auto -15% -65% -15%;height:160px;background:radial-gradient(ellipse,rgba(var(--rgb),.18),transparent 68%);pointer-events:none}
+.card.users{--rgb:139,67,255;border-color:rgba(139,68,246,.72);background:linear-gradient(145deg,rgba(20,10,55,.78),rgba(6,8,28,.68));box-shadow:0 0 22px rgba(122,51,244,.20),0 15px 32px rgba(0,0,0,.16),inset 0 1px rgba(211,190,255,.06)}
+.card.traffic{--rgb:71,139,255;border-color:rgba(75,131,232,.62);background:linear-gradient(145deg,rgba(8,17,49,.78),rgba(5,8,29,.68));box-shadow:0 0 21px rgba(57,119,235,.15),0 15px 32px rgba(0,0,0,.16),inset 0 1px rgba(200,225,255,.05)}
+.card.servers{--rgb:44,215,181;border-color:rgba(54,196,177,.59);background:linear-gradient(145deg,rgba(5,26,35,.80),rgba(3,9,23,.69));box-shadow:0 0 21px rgba(29,200,177,.13),0 15px 32px rgba(0,0,0,.16),inset 0 1px rgba(194,255,242,.045)}
+.card.configs{--rgb:218,179,91;border-color:rgba(190,161,92,.62);background:linear-gradient(145deg,rgba(29,26,23,.80),rgba(9,9,18,.69));box-shadow:0 0 20px rgba(206,166,75,.11),0 15px 32px rgba(0,0,0,.16),inset 0 1px rgba(255,238,190,.045)}
+.card-inner{height:100%;padding:21px 22px;display:grid;grid-template-columns:58px 1fr;gap:0 15px;align-items:start;direction:ltr}
+.card-icon{width:53px;height:53px;border-radius:18px;display:grid;place-items:center;color:rgb(var(--rgb));background:rgba(var(--rgb),.08);border:1px solid rgba(var(--rgb),.31);box-shadow:0 0 18px rgba(var(--rgb),.12),inset 0 0 14px rgba(var(--rgb),.05)}
+.card-icon .icon{width:27px;height:27px}
+.card-copy{direction:rtl;text-align:right}
+.card-title{font-size:11px;color:#c1c1d7;white-space:nowrap}
+.card-number{font-size:23px;font-weight:700;margin-top:7px;line-height:1.2;direction:ltr;text-align:right}
+.card-meta{font-size:9px;color:#8c8cae;margin-top:7px}
+.card-meta .green{color:#35dfb9}
+
+.lower{margin-top:23px;display:grid;grid-template-columns:minmax(0,1.32fr) minmax(330px,1fr);gap:22px;direction:ltr}
+.panel{height:302px;border-radius:16px;border:1px solid rgba(121,106,220,.31);background:linear-gradient(145deg,rgba(24,26,68,.34),rgba(5,8,29,.27));backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);box-shadow:0 16px 35px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.07),inset 0 0 30px rgba(145,110,255,.035);position:relative;overflow:hidden}
+.chart-panel,.server-panel{direction:rtl}
+.panel-head{height:64px;padding:15px 22px;display:flex;align-items:flex-start;justify-content:space-between}
+.panel-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.panel-title .icon{width:18px;height:18px;color:#b4a4ff}
+.panel-sub{font-size:9px;color:#7f80a4;margin-top:4px}
+.panel-icon{width:39px;height:39px;border-radius:12px;border:1px solid rgba(131,108,235,.34);background:rgba(112,70,226,.10);display:grid;place-items:center;color:#b09aff}
+.panel-icon .icon{width:21px;height:21px}
+.chart-area{position:absolute;left:18px;right:18px;top:70px;bottom:13px}
+.grid-lines{position:absolute;left:53px;right:0;top:10px;bottom:34px;background:repeating-linear-gradient(to bottom,rgba(136,137,177,.12) 0 1px,transparent 1px 35px)}
+.y-axis{position:absolute;left:0;top:5px;bottom:33px;width:47px;display:flex;flex-direction:column;justify-content:space-between;color:#8586a8;font-size:8px;direction:ltr}
+.chart-svg{position:absolute;left:53px;right:0;top:7px;width:calc(100% - 53px);height:calc(100% - 39px);overflow:visible}
+.chart-x{position:absolute;left:53px;right:0;bottom:4px;display:flex;justify-content:space-between;color:#77799c;font-size:8px}
+.server-content{padding:7px 23px}
+.server-row{display:grid;grid-template-columns:1fr 76px 85px;gap:15px;align-items:center;direction:ltr;margin-top:13px}
+.location{display:flex;align-items:center;gap:8px;font-size:10px;color:#bfc0d5}
+.flag{font-size:18px}
+.status{text-align:center;color:#39e1b9;font-size:11px;font-weight:600}
+.status::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#2ce0b6;box-shadow:0 0 8px #2ce0b6;margin-left:5px}
+.latency{font-size:16px;color:#e5e4f2;direction:ltr;text-align:right}
+.latency small{display:block;font-size:8px;color:#8586a7;direction:rtl}
+.server-link{position:absolute;right:23px;bottom:25px;color:#9b73ff;text-decoration:none;font-size:10px}
+.server-link:hover{color:#c8b7ff}
+
+.mobile-toggle{display:none}
+
+@media (max-width:1100px){
+  :root{--gap:15px}
+  .header{grid-template-columns:1fr auto 1fr}
+  .search{width:290px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  :root{--gap:0}
+  body::before{background-position:center center}
+  .app{display:block;padding:0}
+  .sidebar{position:fixed;z-index:100;top:10px;left:10px;width:280px;height:calc(100vh - 20px);min-height:0;transform:translateX(-115%);transition:transform .25s ease}
+  #menu:checked ~ .app .sidebar{transform:translateX(0)}
+  .mobile-toggle{display:grid;place-items:center;position:fixed;z-index:110;left:13px;top:13px;width:43px;height:43px;border:1px solid rgba(131,103,230,.43);border-radius:12px;background:rgba(8,10,38,.82);backdrop-filter:blur(12px);color:#d5ccff;box-shadow:0 0 18px rgba(82,43,185,.23)}
+  #menu:checked ~ .mobile-toggle{left:300px}
+  .main{padding:0 13px 18px}
+  .header{height:72px;display:flex;align-items:center;justify-content:flex-end;padding-top:2px}
+  .search-wrap{display:none}
+  .actions{margin-top:0;gap:5px}
+  .profile{margin-left:0}
+  .profile-copy{display:none}
+  .welcome{height:auto;padding:13px 2px 19px}
+  .welcome h1{font-size:19px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .card{height:142px}
+  .card-inner{padding:19px 15px;grid-template-columns:49px 1fr;gap:0 10px}
+  .card-icon{width:46px;height:46px;border-radius:15px}
+  .card-icon .icon{width:23px;height:23px}
+  .card-title{font-size:10px}
+  .card-number{font-size:20px;margin-top:6px}
+  .card-meta{font-size:8px;margin-top:6px}
+  .lower{grid-template-columns:1fr;gap:13px;margin-top:15px}
+  .panel{height:300px}
+  .server-panel{height:245px}
+}
+@media (max-width:430px){
+  .main{padding-left:10px;padding-right:10px}
+  .stats{grid-template-columns:1fr}
+  .card{height:128px}
+  .profile{display:none}
+  .actions{gap:2px}
+  .panel{height:285px}
+}
+
+/* === Precision fixes: sidebar, header actions/search, server title only === */
+:root{--sidebar:265px}
+.sidebar{width:100%}
+.version-copy{display:block}
+.version-title,.version-v,.online{white-space:nowrap}
+.actions{direction:ltr;gap:12px}
+.profile{direction:rtl}
+.search-wrap{justify-self:center}
+.search svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.panel-title>svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+
+@media (max-width:760px){
+}
+@media (max-width:430px){
+  .sidebar{width:265px}
+}
+
+/* === Requested-only fixes: permanent sidebar + header alignment === */
+:root{--sidebar:250px}
+.app{grid-template-columns:250px minmax(0,1fr)}
+.sidebar{width:250px}
+.brand-copy,.nav-item .label,.version-copy{display:block}
+.brand{justify-content:flex-start}
+.nav-item{justify-content:flex-start}
+.version{justify-content:flex-start}
+
+.header{
+  grid-template-columns:1fr auto 1fr;
+  align-items:start;
+  direction:ltr;
+}
+.search-wrap{
+  justify-self:center;
+  margin-top:27px;
+}
+.search{
+  position:relative;
+  width:338px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+}
+.search>svg{
+  display:block;
+  width:17px;
+  height:17px;
+  flex:0 0 17px;
+  fill:none !important;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.actions{
+  justify-self:end;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:12px;
+  margin-top:26px;
+  direction:ltr;
+}
+.action{
+  flex:0 0 28px;
+  width:28px;
+  height:31px;
+}
+.action>svg{
+  display:block;
+  width:21px;
+  height:21px;
+  fill:none !important;
+  stroke:currentColor;
+  stroke-width:1.65;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.profile{
+  flex:0 0 auto;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:9px;
+  direction:rtl;
+  margin-right:3px;
+  margin-left:2px;
+}
+.profile-copy{display:block}
+.avatar{flex:0 0 43px}
+@media (max-width:760px){
+  #menu:checked ~ .mobile-toggle{left:300px}
+}
+@media (max-width:430px){
+  .sidebar{width:280px}
+}
+
+
+/* Only requested micro-fixes */
+@media (min-width:1101px){
+  .header{height:77px;display:flex;align-items:flex-start;justify-content:space-between;direction:ltr}
+  .header>div:first-child{display:none}
+  .search-wrap{order:1;flex:0 0 auto;margin-top:27px;margin-left:31px}
+  .actions{order:2;flex:0 0 auto;display:flex;align-items:center;gap:12px;margin-top:26px;margin-right:0;direction:ltr;white-space:nowrap}
+  .profile{flex:0 0 auto;display:flex;flex-direction:row;align-items:center;gap:9px;direction:ltr;margin-right:3px;margin-left:2px}
+}
+.server-row .location{display:flex;align-items:center;gap:9px;direction:ltr}
+.server-row .location .latency{margin-right:0;margin-left:0}
+
+/* === Final reference-matching corrections === */
+
+/* The reference places the statistic cards visually from left to right as:
+   Active users, Used traffic, Servers, Active configs. */
+.stats{
+  direction:ltr;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:13px;
+}
+.stats .card{
+  min-width:0;
+}
+
+/* Keep each card's icon on the left and its Persian content on the right. */
+.card-inner{
+  direction:ltr;
+  grid-template-columns:58px minmax(0,1fr);
+  column-gap:15px;
+}
+.card-copy{
+  direction:rtl;
+  text-align:right;
+  min-width:0;
+}
+.card-number{
+  white-space:nowrap;
+}
+
+/* Server status: latency | online | location, with no stray US text. */
+.server-row{
+  display:grid;
+  grid-template-columns:76px 76px minmax(0,1fr);
+  align-items:center;
+  column-gap:15px;
+  direction:ltr;
+  margin-top:13px;
+}
+.server-row>.latency{
+  direction:ltr;
+  text-align:center;
+  font-size:16px;
+  color:#e5e4f2;
+  white-space:nowrap;
+}
+.server-row>.latency small{
+  display:block;
+  margin-top:3px;
+  font-size:8px;
+  color:#8586a7;
+  direction:rtl;
+}
+.server-row>.status{
+  direction:rtl;
+  text-align:center;
+  white-space:nowrap;
+}
+.server-row>.location{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:8px;
+  direction:ltr;
+  font-size:10px;
+  color:#bfc0d5;
+  white-space:nowrap;
+}
+.server-row>.location .flag{
+  flex:0 0 auto;
+  font-size:18px;
+  line-height:1;
+}
+.server-link{
+  right:23px;
+  bottom:25px;
+}
+
+/* Stronger but controlled neon treatment, closer to the reference. */
+.sidebar{
+  box-shadow:0 0 28px rgba(91,48,220,.22),0 0 70px rgba(47,25,132,.16),inset 0 0 24px rgba(117,76,255,.035);
+}
+.card.users{box-shadow:0 0 30px rgba(122,51,244,.30),0 15px 32px rgba(0,0,0,.18),inset 0 1px rgba(211,190,255,.08)}
+.card.traffic{box-shadow:0 0 28px rgba(57,119,235,.23),0 15px 32px rgba(0,0,0,.18),inset 0 1px rgba(200,225,255,.07)}
+.card.servers{box-shadow:0 0 28px rgba(29,200,177,.22),0 15px 32px rgba(0,0,0,.18),inset 0 1px rgba(194,255,242,.065)}
+.card.configs{box-shadow:0 0 27px rgba(206,166,75,.20),0 15px 32px rgba(0,0,0,.18),inset 0 1px rgba(255,238,190,.065)}
+
+/* Header spacing and notification markers. */
+.actions{gap:14px}
+.action{width:30px;height:32px}
+.action>.icon,.action>svg{width:21px;height:21px}
+.profile{gap:10px}
+
+@media (max-width:1100px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media (max-width:760px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+  .server-row{grid-template-columns:64px 70px minmax(0,1fr);column-gap:8px}
+  .server-row>.location{font-size:9px;gap:5px}
+  .server-row>.location .flag{font-size:16px}
+  .server-row>.latency{font-size:14px}
+}
+@media (max-width:430px){
+  .stats{grid-template-columns:1fr}
+  .server-row{grid-template-columns:58px 66px minmax(0,1fr);column-gap:6px}
+}
+
+
+/* === Added panels: latest configs and recent users === */
+.recent-grid{margin-top:22px;display:grid;grid-template-columns:minmax(0,1.32fr) minmax(330px,1fr);gap:22px;direction:ltr}
+.recent-panel{height:250px;border-radius:16px;border:1px solid rgba(121,106,220,.31);background:linear-gradient(145deg,rgba(24,26,68,.34),rgba(5,8,29,.27));backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);box-shadow:0 16px 35px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.07),inset 0 0 30px rgba(145,110,255,.035);position:relative;overflow:hidden;direction:rtl}
+.recent-head{height:67px;padding:16px 22px 10px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.recent-title{font-size:15px;font-weight:700;white-space:nowrap}
+.recent-all{font-size:10px;color:#a18bdf;text-decoration:none;white-space:nowrap}
+.recent-all:hover{color:#d0c4ff}
+.recent-table{padding:0 22px}
+.recent-table-head,.recent-table-row{display:grid;align-items:center;gap:12px;direction:rtl}
+.recent-table-head{height:35px;color:#8586a8;font-size:10px;border-bottom:1px solid rgba(130,132,174,.22)}
+.recent-table-row{min-height:49px;border-bottom:1px solid rgba(130,132,174,.18);font-size:11px;color:#d6d5e8}
+.recent-table-row:last-child{border-bottom:0}
+.configs-table .recent-table-head,.configs-table .recent-table-row{grid-template-columns:1.1fr .7fr 1.2fr .7fr}
+.users-table .recent-table-head,.users-table .recent-table-row{grid-template-columns:1.15fr 1fr .75fr}
+.recent-user,.recent-config,.recent-server{display:flex;align-items:center;gap:8px;min-width:0}
+.recent-avatar{width:29px;height:29px;border-radius:50%;border:1px solid rgba(139,104,237,.55);background:rgba(112,70,226,.16);display:grid;place-items:center;color:#c0a8ff;flex:none}
+.recent-avatar svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.recent-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-status{justify-self:start;display:inline-flex;align-items:center;justify-content:center;min-width:72px;padding:7px 12px;border-radius:20px;background:rgba(0,190,135,.12);color:#35dfb9;font-size:10px;font-weight:600;white-space:nowrap}
+.recent-status::before{content:"";width:5px;height:5px;border-radius:50%;background:#2ce0b6;box-shadow:0 0 7px rgba(44,224,182,.8);margin-left:5px}
+.recent-traffic{direction:ltr;text-align:right;white-space:nowrap;color:#deddf0}
+.recent-server{white-space:normal;line-height:1.5}
+.recent-server .flag{font-size:17px;flex:none}
+@media (max-width:1100px){
+  .recent-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+  .recent-panel{height:250px}
+  .recent-head{padding-left:16px;padding-right:16px}
+  .recent-table{padding:0 16px}
+  .recent-table-head,.recent-table-row{gap:7px}
+}
+@media (max-width:760px){
+  .recent-grid{grid-template-columns:1fr;gap:13px;margin-top:15px}
+  .recent-panel{height:250px}
+}
+
+
+/* === Requested glass treatment: transparent purple-tinted surfaces only === */
+.sidebar{
+  background:linear-gradient(145deg,rgba(46,25,96,.46),rgba(12,8,42,.30));
+  border-color:rgba(151,116,255,.42);
+  box-shadow:0 0 30px rgba(94,48,205,.22),inset 0 1px rgba(224,211,255,.10),inset 0 0 26px rgba(132,83,255,.07);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.panel.server-panel,.recent-panel{
+  background:linear-gradient(145deg,rgba(52,28,108,.40),rgba(11,8,40,.25));
+  border-color:rgba(151,116,255,.38);
+  box-shadow:0 0 24px rgba(94,48,205,.18),inset 0 1px rgba(224,211,255,.09),inset 0 0 24px rgba(132,83,255,.06);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+
+/* === Detailed section layouts, isolated from the dashboard === */
+.section-view{max-width:100%;direction:rtl}
+.section-view.active{display:block}
+.section-head{margin-bottom:16px}
+.section-head h2{font-size:24px;font-weight:800;letter-spacing:-.4px}
+.section-head p{color:#8e8ca7;font-size:12px}
+.section-actions{display:flex;gap:8px;align-items:center}
+.section-btn,.mini-btn{font-family:inherit;border:1px solid rgba(137,91,255,.34);background:linear-gradient(145deg,rgba(79,37,159,.38),rgba(13,10,35,.48));color:#eee9ff;border-radius:10px;padding:10px 13px;font-size:12px;cursor:pointer;box-shadow:inset 0 1px rgba(220,200,255,.06)}
+.section-btn.primary{background:linear-gradient(135deg,#7436f5,#4b1bb4);border-color:rgba(188,157,255,.6)}
+.section-btn:hover,.mini-btn:hover{border-color:rgba(176,137,255,.7);transform:translateY(-1px)}
+.section-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.section-search{min-width:190px;flex:1;max-width:330px;border:1px solid rgba(117,95,178,.24);background:rgba(6,12,27,.65);color:#eee;border-radius:11px;padding:11px 13px;font-family:inherit;font-size:12px;outline:none}
+.section-search:focus{border-color:#8958ff;box-shadow:0 0 0 3px rgba(126,70,255,.1)}
+.section-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.section-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.detail-card{min-width:0;background:linear-gradient(145deg,rgba(5,17,34,.86),rgba(4,9,23,.79));border:1px solid rgba(105,128,170,.19);border-radius:17px;padding:16px;box-shadow:inset 0 1px rgba(220,230,255,.035),inset 0 0 25px rgba(86,45,175,.035)}
+.detail-card h3{font-size:14px;color:#f0ebff;margin:0 0 13px;font-weight:800}
+.detail-card .sub{font-size:11px;color:#777c99;margin-top:-7px;margin-bottom:12px}
+.metric-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid rgba(100,116,155,.12);font-size:12px;color:#b9b8ce}.metric-row:last-child{border-bottom:0}.metric-row strong{color:#f3efff;font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:4px 9px;font-size:10px;border:1px solid rgba(41,207,145,.22);background:rgba(13,151,99,.12);color:#42e0a4;white-space:nowrap}.pill.off{color:#ff879c;border-color:rgba(255,90,121,.24);background:rgba(184,36,70,.1)}.pill.warn{color:#f6c76c;border-color:rgba(246,199,108,.2);background:rgba(180,117,24,.1)}
+.data-card{overflow:hidden;padding:0}.data-card .card-title{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid rgba(100,116,155,.14)}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;min-width:560px}.data-table th{color:#8d91ae;font-weight:600;background:rgba(22,28,54,.32)}.data-table td,.data-table th{padding:12px 13px;text-align:right;border-bottom:1px solid rgba(100,116,155,.1);white-space:nowrap}.data-table td{color:#d1d0e2}.data-table tr:last-child td{border-bottom:0}.table-scroll{overflow-x:auto}
+.avatar{width:29px;height:29px;border-radius:10px;display:inline-grid;place-items:center;background:linear-gradient(145deg,#6e35d9,#211143);border:1px solid rgba(176,135,255,.3);color:#fff;font-size:11px;font-weight:800}.user-cell{display:flex;align-items:center;gap:9px}.muted{color:#7d829d!important}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:#a8a6bf}.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:rgba(10,20,39,.8);border:1px solid rgba(108,125,165,.18);border-radius:10px;color:#e9e6f6;padding:11px;font-family:inherit;font-size:12px;outline:none}.field textarea{min-height:85px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:#8958ff;box-shadow:0 0 0 3px rgba(126,70,255,.1)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid rgba(100,116,155,.12);font-size:12px;color:#c7c5d8}.toggle-row:last-child{border-bottom:0}.switch{width:34px;height:19px;border-radius:20px;background:#263047;border:1px solid #39435c;position:relative;flex:0 0 auto}.switch.on{background:linear-gradient(90deg,#5a22d9,#9b58ff);border-color:#925cff}.switch:after{content:"";position:absolute;width:13px;height:13px;top:2px;right:2px;border-radius:50%;background:#a4abc0;transition:.2s}.switch.on:after{right:17px;background:#fff}
+.progress{height:6px;background:rgba(72,80,112,.3);border-radius:20px;overflow:hidden;margin-top:9px}.progress span{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#4d20c9,#a06aff)}
+.chart-mini{height:130px;display:flex;align-items:end;gap:9px;padding:15px 4px 4px}.chart-mini span{flex:1;min-width:8px;border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#a16cff,#4b1ab9);opacity:.8}
+.notice{border:1px solid rgba(230,174,52,.2);background:rgba(123,87,15,.12);color:#dcbf77;border-radius:10px;padding:10px;font-size:11px;line-height:1.9;margin-bottom:12px}
+.danger-btn{border-color:rgba(255,77,108,.3);color:#ff8297;background:rgba(100,15,38,.14)}
+@media(max-width:900px){.section-grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.section-grid,.section-grid.three,.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.section-head h2{font-size:20px}.section-toolbar{align-items:stretch}.section-search{max-width:none}.section-actions{width:100%}.section-btn{flex:1}}
+
+
+/* === Subscription action icons: premium glass treatment only === */
+.subscription-table .mini-btn{
+  width:36px;
+  height:34px;
+  padding:0;
+  display:inline-grid;
+  place-items:center;
+  margin-inline:3px;
+  border-radius:11px;
+  border:1px solid rgba(164,125,255,.34);
+  background:linear-gradient(145deg,rgba(91,49,176,.28),rgba(18,10,48,.52));
+  box-shadow:inset 0 1px rgba(235,220,255,.12),inset 0 0 15px rgba(137,82,255,.08),0 5px 16px rgba(0,0,0,.16);
+  color:#d8c7ff;
+}
+.subscription-table .mini-btn:hover{
+  border-color:rgba(194,157,255,.78);
+  background:linear-gradient(145deg,rgba(112,62,218,.42),rgba(22,11,59,.64));
+  box-shadow:inset 0 1px rgba(255,245,255,.16),inset 0 0 18px rgba(157,101,255,.15),0 0 18px rgba(126,70,255,.18);
+}
+.subscription-icon{display:grid;place-items:center;width:19px;height:19px;}
+.subscription-icon svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(176,132,255,.24));}
+</style>
+
+<style id="deep-dark-purple-glass">
+/* === Deep dark glass with subtle purple inner edge === */
+.sidebar{
+  background:linear-gradient(145deg,rgba(13,9,30,.78),rgba(7,5,20,.68));
+  border-color:rgba(139,92,246,.48);
+  box-shadow:0 0 30px rgba(76,35,160,.20),inset 0 1px 0 rgba(196,163,255,.13),inset 0 0 0 1px rgba(126,72,255,.18),inset 0 0 28px rgba(106,53,220,.12);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.panel.server-panel,.recent-panel{
+  background:linear-gradient(145deg,rgba(17,11,39,.80),rgba(8,6,24,.70));
+  border-color:rgba(139,92,246,.44);
+  box-shadow:0 0 26px rgba(76,35,160,.18),inset 0 1px 0 rgba(205,181,255,.12),inset 0 0 0 1px rgba(126,72,255,.20),inset 0 0 30px rgba(106,53,220,.13);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.panel.server-panel::before,.recent-panel::before,.sidebar::before{
+  content:"";
+  position:absolute;
+  inset:1px;
+  border:1px solid rgba(153,102,255,.13);
+  border-radius:inherit;
+  pointer-events:none;
+}
+
+/* === Sidebar section navigation === */
+.nav-item{cursor:pointer;transition:background .22s ease,border-color .22s ease,transform .22s ease}
+.nav-item:hover{background:rgba(111,67,206,.16);border-color:rgba(161,119,255,.28);transform:translateX(-2px)}
+.nav-item.active{background:linear-gradient(135deg,rgba(100,54,190,.28),rgba(24,13,61,.38));border-color:rgba(173,129,255,.55);box-shadow:inset 0 0 22px rgba(122,76,235,.09),0 0 18px rgba(95,45,190,.12)}
+.section-view{display:none;animation:sectionIn .28s ease both}
+.section-view.active{display:block}
+@keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.section-head h2{margin:0;font-size:22px;color:#f2edff}
+.section-head p{margin:5px 0 0;color:#a99bc9;font-size:13px}
+.section-actions{display:flex;gap:9px;flex-wrap:wrap}
+.section-btn{border:1px solid rgba(159,117,255,.35);background:rgba(72,38,143,.24);color:#eee7ff;border-radius:12px;padding:10px 14px;cursor:pointer}
+.section-btn:hover{background:rgba(113,69,207,.34)}
+.section-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.section-card{background:linear-gradient(145deg,rgba(35,20,76,.68),rgba(8,6,27,.58));border:1px solid rgba(150,111,246,.26);border-radius:18px;padding:18px;box-shadow:inset 0 1px rgba(220,205,255,.06),inset 0 0 28px rgba(112,65,220,.06)}
+.section-card h3{margin:0 0 9px;color:#eee7ff;font-size:15px}.section-card p{margin:0;color:#aaa0c6;font-size:13px;line-height:1.9}
+.section-table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:16px;background:rgba(9,6,27,.43);border:1px solid rgba(150,111,246,.23)}
+.section-table th,.section-table td{padding:14px;text-align:right;border-bottom:1px solid rgba(150,111,246,.13);color:#d8d0eb;font-size:13px}.section-table th{color:#bba7ee;background:rgba(89,48,170,.15)}.section-table tr:last-child td{border-bottom:0}
+.status-pill{display:inline-block;padding:4px 9px;border-radius:999px;color:#b9ffd7;background:rgba(42,165,104,.12);border:1px solid rgba(85,220,151,.25);font-size:11px}
+@media(max-width:900px){.section-cards{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.section-cards{grid-template-columns:1fr}.section-head h2{font-size:19px}}
+
+</style>
+
+<style id="precision-profile-and-reference-tables">
+/* Profile visibility: scoped to profile/avatar elements only. */
+.header .profile .avatar{width:48px;height:48px;min-width:48px;border-radius:50%!important;overflow:hidden;border:1px solid rgba(177,133,255,.72);background:rgba(18,10,43,.72);box-shadow:0 0 0 2px rgba(112,61,226,.16),0 0 22px rgba(116,65,235,.28),inset 0 0 14px rgba(170,115,255,.16)}
+.header .profile .avatar img{width:100%;height:100%;display:block;object-fit:cover;object-position:center;transform:scale(1.12)}
+.user-avatar{border-radius:50%!important;overflow:hidden!important;display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 auto}
+.user-avatar img{width:100%;height:100%;display:block;object-fit:cover;object-position:center}
+.recent-user .recent-avatar.user-avatar{width:29px;height:29px;border-radius:50%!important;background:linear-gradient(145deg,#6e35d9,#211143);border:1px solid rgba(176,135,255,.38)}
+.subscription-reference-card{margin-top:8px}
+.subscription-table{min-width:720px}
+.subscription-table td:last-child{display:flex;gap:5px;align-items:center}
+.subscription-table td:last-child .mini-btn{min-width:28px;padding:7px 8px}
+@media(max-width:620px){.header .profile .avatar{width:42px;height:42px;min-width:42px}.subscription-table{min-width:680px}}
+</style>
+
+<style id="final-requested-tweaks">
+/* Only the requested final adjustments. Existing dashboard glass backgrounds remain untouched. */
+.sidebar{
+  background:linear-gradient(145deg,rgba(46,25,96,.46),rgba(12,8,42,.30));
+  border-color:rgba(151,116,255,.42);
+  box-shadow:0 0 30px rgba(94,48,205,.22),inset 0 1px rgba(224,211,255,.10),inset 0 0 26px rgba(132,83,255,.07);
+}
+.panel.server-panel,.recent-panel{
+  background:linear-gradient(145deg,rgba(52,28,108,.40),rgba(11,8,40,.25));
+  border-color:rgba(151,116,255,.38);
+  box-shadow:0 0 24px rgba(94,48,205,.18),inset 0 1px rgba(224,211,255,.09),inset 0 0 24px rgba(132,83,255,.06);
+}
+.sidebar-foot{margin-top:18px}
+.section-view[data-section="subscriptions"] .section-grid{gap:12px}
+.section-view[data-section="subscriptions"] .detail-card{padding:15px}
+.section-view[data-section="subscriptions"] .data-card{margin-top:12px !important}
+.main .stats,.main .stats *,
+.main .lower,.main .lower *,
+.main .recent-grid,.main .recent-grid *{font-weight:700}
+</style>
+<style id="titan-premium">
+/* ══════════════════════════════════════════════════════════════════════════
+   TiTaN premium layer — icon actions + luxury server cards.
+   Appended block: it only styles the classes the bridge emits, so the rest of
+   the panel is untouched. Tokens come from :root above (--purple/--green/--gold).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── premium icon actions (configs, users, subscriptions, servers) ───────── */
+.ico-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;
+  font-family:inherit;cursor:pointer;border-radius:11px;color:#d7d4ef;border:1px solid rgba(137,91,255,.34);
+  background:linear-gradient(180deg,rgba(26,18,54,.92),rgba(11,8,26,.92));
+  box-shadow:inset 0 1px rgba(220,200,255,.07);
+  transition:transform .18s cubic-bezier(.22,.61,.36,1),color .18s,border-color .18s,box-shadow .18s}
+.ico-btn svg{display:block;flex:0 0 auto}
+.ico-btn:hover{color:#fff;transform:translateY(-2px);border-color:rgba(143,69,255,.62);
+  box-shadow:0 12px 24px -13px rgba(143,69,255,.85),inset 0 1px rgba(220,200,255,.14)}
+.ico-btn:active{transform:translateY(0)}
+.ico-btn[disabled]{opacity:.45;cursor:default;transform:none}
+.ico-btn.gold{color:#eccb7c;border-color:rgba(217,181,95,.42)}
+.ico-btn.gold:hover{border-color:rgba(217,181,95,.75);box-shadow:0 12px 24px -13px rgba(217,181,95,.7)}
+.ico-btn.violet{color:#d9c4ff;border-color:rgba(143,69,255,.52)}
+.ico-btn.ok{color:#6ff0cd;border-color:rgba(49,220,185,.4)}
+.ico-btn.ok:hover{border-color:rgba(49,220,185,.7);box-shadow:0 12px 24px -13px rgba(49,220,185,.6)}
+.ico-btn.danger{color:#ff8b9c;border-color:rgba(255,107,138,.36)}
+.ico-btn.danger:hover{border-color:rgba(255,107,138,.7);box-shadow:0 12px 24px -13px rgba(255,107,138,.65)}
+.ico-btn.lg{width:44px;height:44px;border-radius:14px}
+.ico-btn[data-tip]::after{content:attr(data-tip);position:absolute;inset-inline-start:50%;bottom:calc(100% + 9px);
+  transform:translate(-50%,-6px);background:rgba(8,7,24,.97);border:1px solid rgba(143,69,255,.42);color:#efeaff;
+  font-size:10px;line-height:1.7;padding:4px 9px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;
+  transition:opacity .16s,transform .16s;z-index:9;box-shadow:0 14px 28px -15px rgba(0,0,0,.95)}
+.ico-btn[data-tip]:hover::after{opacity:1;transform:translate(-50%,0)}
+.row-actions{display:flex;gap:7px;align-items:center;justify-content:flex-start}
+.row-actions .ico-btn{width:32px;height:32px;border-radius:10px}
+/* the section head still carries .section-btn.primary — the bridge binds to that
+   class — but renders as a premium icon button now. */
+.section-btn.ico-btn{width:44px;min-width:44px;height:44px;padding:0;border-radius:14px;box-shadow:inset 0 1px rgba(220,200,255,.09)}
+.section-btn.ico-btn.primary{border-color:rgba(143,69,255,.6);background:linear-gradient(180deg,rgba(74,36,150,.55),rgba(14,9,34,.9))}
+
+/* ── luxury server card ─────────────────────────────────────────────────── */
+.node-lux{position:relative;overflow:hidden;border-radius:20px;padding:17px 17px 15px;direction:rtl;
+  border:1px solid rgba(105,128,170,.22);
+  background:radial-gradient(115% 95% at 100% 0%,rgba(143,69,255,.16),transparent 58%),
+             radial-gradient(90% 80% at 0% 100%,rgba(75,156,255,.08),transparent 60%),
+             linear-gradient(180deg,rgba(6,17,38,.92),rgba(4,9,23,.9));
+  box-shadow:0 22px 44px -32px rgba(0,0,0,.95),inset 0 1px rgba(220,230,255,.05);
+  transition:transform .22s cubic-bezier(.22,.61,.36,1),border-color .22s,box-shadow .22s}
+.node-lux::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.055) 48%,transparent 62%);
+  transform:translateX(-120%);transition:transform .75s cubic-bezier(.22,.61,.36,1)}
+.node-lux:hover{transform:translateY(-4px);border-color:rgba(143,69,255,.5);box-shadow:0 30px 60px -34px rgba(143,69,255,.55)}
+.node-lux:hover::after{transform:translateX(120%)}
+.node-lux.offline{border-color:rgba(255,107,138,.28);
+  background:radial-gradient(115% 95% at 100% 0%,rgba(255,107,138,.1),transparent 58%),linear-gradient(180deg,rgba(15,12,26,.92),rgba(6,9,20,.92))}
+.node-lux.local{border-color:rgba(217,181,95,.34)}
+.nl-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.nl-medal{width:52px;height:52px;flex:0 0 52px;border-radius:15px;display:grid;place-items:center;
+  background:linear-gradient(180deg,rgba(143,69,255,.18),rgba(9,14,32,.25));border:1px solid rgba(143,69,255,.3);
+  box-shadow:inset 0 1px rgba(220,200,255,.1)}
+.nl-medal .fe{font-size:26px;line-height:1}
+.nl-name{font-weight:800;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:7px}
+.nl-loc{font-size:10.5px;color:var(--muted);margin-top:3px}
+.nl-orb{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);position:relative}
+.nl-orb::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid currentColor;color:var(--green);
+  opacity:.5;animation:nlPulse 2.4s cubic-bezier(.22,.61,.36,1) infinite}
+.nl-orb.off{background:#ff6b8a;box-shadow:0 0 10px #ff6b8a;color:#ff6b8a}
+.nl-orb.off::after{animation:none;opacity:.22}
+@keyframes nlPulse{0%{transform:scale(.7);opacity:.55}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
+.nl-dial{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+.nl-dial-wrap{position:relative;display:grid;place-items:center}
+.nl-dial svg.ring{width:66px;height:66px;transform:rotate(-90deg)}
+.rg-bg{fill:none;stroke:rgba(255,255,255,.07);stroke-width:7}
+.rg-fg{fill:none;stroke-width:7;stroke-linecap:round}
+.rg-txt{position:absolute;font-size:13px;font-weight:800;direction:ltr}
+.nl-dial-val{font-size:14px;font-weight:800;color:var(--ink);direction:ltr}
+.nl-dial-lbl{font-size:10px;color:var(--muted)}
+.nl-caps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.nl-cap{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#b9b8ce;padding:4px 9px;border-radius:999px;
+  border:1px solid rgba(100,116,155,.28);background:rgba(6,14,32,.65);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.nl-cap b{color:var(--ink);font-weight:700}
+.nl-cap.ok{color:#7ef0cf;border-color:rgba(49,220,185,.32);background:rgba(6,40,34,.5)}
+.nl-cap.bad{color:#ff9aa8;border-color:rgba(255,107,138,.32);background:rgba(42,9,20,.5)}
+.nl-cap.warn{color:#eccb7c;border-color:rgba(217,181,95,.32);background:rgba(40,32,10,.5)}
+.dotm{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 7px currentColor;flex:0 0 auto}
+.nl-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+.nl-metric{background:linear-gradient(180deg,rgba(8,19,40,.85),rgba(5,11,26,.85));border:1px solid rgba(105,128,170,.18);
+  border-radius:12px;padding:8px 10px}
+.nl-metric .k{font-size:9.5px;color:var(--muted);direction:ltr;text-align:left}
+.nl-metric .v{font-size:14px;font-weight:800;color:var(--ink);margin-top:2px;direction:ltr;text-align:left}
+.nl-metric .bar{height:4px;border-radius:4px;background:rgba(143,69,255,.16);margin-top:6px;overflow:hidden}
+.nl-metric .bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#6a2ce0,#a35cff)}
+.nl-metric.warm .bar i{background:linear-gradient(90deg,#c79a37,#ffd479)}
+.nl-metric.hot .bar i{background:linear-gradient(90deg,#ff4f6b,#ff9aa8)}
+.nl-meta{display:flex;flex-wrap:wrap;gap:11px;font-size:10.5px;color:var(--muted);margin-bottom:12px}
+.nl-meta b{color:#c9c6e0;font-weight:700}
+.nl-note{font-size:10.5px;color:#eccb7c;margin:-3px 0 11px;line-height:1.9}
+.nl-note.bad{color:#ff9aa8}
+.nl-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:12px;border-top:1px solid rgba(100,116,155,.18)}
+.nl-actions .spacer{flex:1}
+.node-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-top:14px}
+
+/* ── dashboard server strip ─────────────────────────────────────────────── */
+.server-row{gap:12px}
+.sr-medal{width:34px;height:26px;flex:0 0 34px;border-radius:8px;display:grid;place-items:center;font-size:15px;
+  background:linear-gradient(180deg,rgba(143,69,255,.16),rgba(9,14,32,.3));border:1px solid rgba(143,69,255,.24)}
+.sr-name{font-size:11.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-loc{font-size:9.5px;color:var(--muted);direction:ltr}
+.ping{font-weight:800;direction:ltr;text-align:right}
+.ping small{display:block;font-weight:400;font-size:9px;color:var(--muted);direction:rtl}
+.ping.good{color:#42e0a4}.ping.mid{color:#eccb7c}.ping.bad{color:#ff8b9c}.ping.off{color:var(--muted)}
+.status.on{color:#42e0a4}.status.off{color:#ff8b9c}
+
+
+/* ── node-assignment feedback ───────────────────────────────────────────── */
+.node-hint{font-size:10.5px;line-height:1.9;color:var(--muted);border-radius:10px;padding:8px 11px;
+  border:1px solid rgba(105,128,170,.2);background:rgba(6,14,32,.55)}
+.node-hint.ok{color:#7ef0cf;border-color:rgba(49,220,185,.32);background:rgba(6,40,34,.4)}
+.node-hint.warn{color:#eccb7c;border-color:rgba(217,181,95,.32);background:rgba(40,32,10,.4)}
+
+/* ── the node setup recipe ──────────────────────────────────────────────── */
+.env-list{display:grid;gap:6px;border-radius:12px;border:1px solid rgba(105,128,170,.22);
+  background:rgba(5,11,26,.72);padding:10px}
+.env-line{display:flex;gap:10px;align-items:center;justify-content:space-between;cursor:pointer;
+  border-radius:8px;padding:6px 8px;transition:background .15s}
+.env-line:hover{background:rgba(143,69,255,.12)}
+.env-k{font-size:10.5px;color:#c9c6e0;direction:ltr;font-family:ui-monospace,Menlo,Consolas,monospace}
+.env-v{font-size:10.5px;color:#8ff0d0;direction:ltr;font-family:ui-monospace,Menlo,Consolas,monospace;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%}
+
+/* ── subscription config picker ─────────────────────────────────────────── */
+.sub-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 7px;
+  border-radius:999px;font-size:10.5px;font-weight:700;color:#d9c4ff;border:1px solid rgba(143,69,255,.4);
+  background:linear-gradient(180deg,rgba(74,36,150,.4),rgba(14,9,34,.6))}
+.cfg-pick-list{display:grid;gap:8px;max-height:46vh;overflow:auto;padding-inline-end:2px}
+.cfg-pick{display:flex;gap:11px;align-items:center;cursor:pointer;border-radius:12px;padding:10px 12px;
+  border:1px solid rgba(105,128,170,.22);background:linear-gradient(180deg,rgba(8,19,40,.85),rgba(5,11,26,.85));
+  transition:border-color .16s,background .16s}
+.cfg-pick:hover{border-color:rgba(143,69,255,.45);background:rgba(20,14,44,.85)}
+.cfg-pick input{width:17px;height:17px;accent-color:#8f45ff;cursor:pointer}
+.cfg-pick-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cfg-pick-name{font-size:11.5px;font-weight:700;color:var(--ink);direction:ltr}
+.cfg-pick-host{font-size:10px;color:var(--muted);direction:ltr;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+
+<style id="titan-latency-and-subscription">
+/* The ping advisor rows and the subscription builder are drawn by
+   /static/js/titan-bridge.js; these are their styles. They used to sit at the
+   very end of the file, *after* </html>, where a browser has no choice but to
+   print them as body text -- the block of source code that appeared under the
+   page, and the 521-px-wide line that made a phone zoom the whole panel out. */
+/* ── latency advisor (پینگ‌سنج) ──────────────────────────────────────────────
+   Rows are filled from the admin's own browser, so the number is a real
+   client-side round trip and not the panel→node probe shown on the cards. */
+.lat-grid{display:grid;gap:8px}
+.lat-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid rgba(151,116,255,.22);border-radius:12px;background:linear-gradient(145deg,rgba(47,25,105,.28),rgba(11,8,30,.5))}
+.lat-name{flex:1;min-width:0;font-size:12px;color:#ded8ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lat-val{font-size:12px;color:#c9c4e6;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lat-ms{font-size:15px;font-weight:700}
+.lat-ms.ok{color:#31dcb9}.lat-ms.mid{color:#d9b55f}.lat-ms.bad{color:#ff6b8a}.lat-ms.off{color:#8c88a8}
+.lat-tag{font-size:10.5px;white-space:nowrap}
+.lat-verdict{padding:11px 13px;border-radius:12px;border:1px solid rgba(151,116,255,.28);background:rgba(24,14,58,.5);font-size:11.5px;color:#c9c4e6;line-height:2.1}
+.lat-verdict b{color:#f0ecff}
+.lat-custom{display:flex;gap:8px;align-items:center}
+.lat-custom input{flex:1;min-width:0;padding:10px 12px;border-radius:11px;border:1px solid rgba(151,116,255,.24);background:rgba(9,7,26,.85);color:#efeaff;font-family:inherit;font-size:12px}
+.lat-spin{color:#a99bff}
+
+/* ── subscription builder + node detection ───────────────────────────────── */
+.sub-list{display:grid;gap:10px;max-height:46vh;overflow:auto;padding-inline-end:4px}
+.sub-user{border:1px solid rgba(151,116,255,.22);border-radius:13px;padding:10px 12px;background:linear-gradient(145deg,rgba(44,24,98,.28),rgba(11,8,30,.5))}
+.sub-user-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sub-user-name{font-size:12.5px;color:#e6e1ff}
+.sub-user-head .spacer{flex:1}
+.sub-chips{display:flex;flex-wrap:wrap;gap:7px}
+.sub-chip{font-family:inherit;font-size:11px;cursor:pointer;padding:6px 11px;border-radius:999px;color:#b9b3d8;
+  border:1px solid rgba(137,91,255,.28);background:rgba(16,12,38,.85);transition:.16s}
+.sub-chip:hover{border-color:rgba(143,69,255,.6)}
+.sub-chip.on{color:#fff;border-color:rgba(49,220,185,.55);background:linear-gradient(135deg,rgba(26,120,102,.5),rgba(14,44,40,.75));box-shadow:0 8px 18px -12px rgba(49,220,185,.9)}
+.sub-summary{font-size:11.5px;color:#a8a6bf}
+.sub-url{display:flex;align-items:center;gap:8px;font-size:11px;color:#bdb8dc;justify-content:space-between;background:rgba(9,7,26,.75);border:1px solid rgba(137,91,255,.22);border-radius:11px;padding:8px 11px;overflow:auto}
+.sub-token{font-size:10px;margin-inline-start:6px}
+.sub-medal{background:linear-gradient(135deg,#7436f5,#3c189c);color:#fff;font-weight:700}
+.det-card{border:1px solid rgba(151,116,255,.26);border-radius:12px;padding:9px 12px;background:rgba(16,12,38,.7);margin-top:8px;font-size:11.5px;color:#c9c4e6}
+.det-row{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.det-ok{color:#6ff0cd}.det-bad{color:#ff8fa6}
+</style>
+
+<style id="titan-responsive">
+/* ═══ Responsive pass — the dashboard on phones and tablets ═══════════════════
+   Written as size-aware overrides, so not one desktop rule changes. Each item
+   below came from loading the real dashboard at 320 … 1440 px and watching what
+   broke:
+     · the header only rearranged itself below 760 px, so a 768-px tablet had its
+       action buttons hanging off the right edge;
+     · the location text inside a server row could not shrink in its grid cell and
+       pushed out of the card between 760 and 1100 px;
+     · the data tables carry a 560–720 px min-width — they scroll inside their own
+       .table-scroll box now instead of widening the whole page;
+     · the four stat cards were forced into a single column below 430 px, which made
+       the dashboard four screens tall. Two-by-two is what the reference shows. */
+@media (max-width:1100px){
+  .header{height:auto;min-height:64px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 0 0}
+  .actions{margin-top:0;justify-content:flex-end}
+  .server-row>*{min-width:0}
+  .server-row .location,.server-row .sr-loc{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .server-row .location>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .node-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))}
+}
+@media (max-width:1000px){
+  .actions{gap:8px;flex-wrap:wrap;min-width:0}
+  .profile{min-width:0}
+  .profile-copy{max-width:132px;min-width:0;overflow:hidden}
+  .profile-name,.profile-role{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media (max-width:760px){
+  html,body{overflow-x:hidden}
+  .main{padding:0 12px 22px}
+  .header{min-height:56px;padding:2px 0 0;gap:6px}
+  .actions{gap:6px}
+  .welcome{padding:10px 2px 14px}
+  .stats{gap:10px}
+  .card{height:auto;min-height:118px}
+  .card-inner{padding:14px 13px;grid-template-columns:44px minmax(0,1fr);gap:0 9px;align-items:center}
+  .card-title{white-space:normal}
+  .table-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  .data-table,.subscription-table{min-width:0}
+  .data-table td,.data-table th{padding:10px 11px}
+  .detail-card,.recent-grid,.recent-panel,.section-view{max-width:100%;min-width:0}
+  .recent-panel{height:auto;min-height:190px;max-height:62vh}
+  .nl-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .nav-item{height:46px}
+}
+@media (max-width:430px){
+  .main{padding:0 10px calc(20px + env(safe-area-inset-bottom))}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{min-height:104px}
+  .card-inner{padding:12px 11px;grid-template-columns:38px minmax(0,1fr);gap:0 8px}
+  .card-number{font-size:19px;margin-top:5px}
+  .card-meta{font-size:9px}
+  .card-icon{width:38px;height:38px}
+  .welcome h1{font-size:18px}
+  .sidebar{width:min(280px,84vw)}
+  #menu:checked ~ .mobile-toggle{left:calc(10px + min(280px,84vw) + 9px)}
+  input,select,textarea{font-size:16px}   /* below 16 px iOS zooms the page on focus */
+  .nl-metrics{gap:6px}
+}
+</style>
+</head>
+<body>
+<input type="checkbox" id="menu" hidden>
+<label class="mobile-toggle" for="menu" aria-label="باز و بسته کردن منو"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></label>
+
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-logo"><img src="data:image/jpeg;base64,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" alt=""></div>
+    <div class="brand-copy"><div class="brand-name">TiTaN</div><div class="brand-sub">PRIVATE NETWORK</div></div>
+  </div>
+  <nav class="nav" aria-label="ناوبری">
+    <button class="nav-item active"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5v9a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1z"/></svg></span><span class="label">داشبورد</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.7-3.8 3.1-6 7-6s6.3 2.2 7 6"/></svg></span><span class="label">کاربران</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="label">کانفیگ‌ها</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/></svg></span><span class="label">سرورها (Nodes)</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><path d="M8 12h8m-4-4 4 4-4 4"/></svg></span><span class="label">اشتراک‌ها</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span class="label">گزارش‌ها</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19 13 .1-2-1.7-.5a5.9 5.9 0 0 0-.7-1.7l.9-1.5-1.4-1.4-1.5.9a5.9 5.9 0 0 0-1.7-.7L12.5 4h-2l-.5 1.7a5.9 5.9 0 0 0-1.7.7l-1.5-.9-1.4 1.4.9 1.5a5.9 5.9 0 0 0-.7 1.7L4 11v2l1.6.5a5.9 5.9 0 0 0 .7 1.7l-.9 1.5 1.4 1.4 1.5-.9a5.9 5.9 0 0 0 1.7.7l.5 1.7h2l.5-1.7a5.9 5.9 0 0 0 1.7-.7l1.5.9 1.4-1.4-.9-1.5a5.9 5.9 0 0 0 .7-1.7z"/></svg></span><span class="label">تنظیمات</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.8-2.8 8-7 10-4.2-2-7-5.2-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="label">مدیریت ادمین</span></button>
+    <button class="nav-item"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6.5 3-3 3 3-3 3"/><path d="M17.5 3.5a5 5 0 0 0-6.8 6.8L4 17l3 3 6.7-6.7a5 5 0 0 0 6.8-6.8l-2.3 2.3-3-3z"/></svg></span><span class="label">ابزارها</span></button>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="version">
+      <div class="version-logo"><img src="data:image/jpeg;base64,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" alt=""></div>
+      <div class="version-copy"><div class="version-title">TiTaN</div><div class="version-v">v2.0.0</div><div class="online"><span class="dot"></span>Online</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+<header class="header">
+  <div></div>
+  <div class="search-wrap">
+    <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.2"/><path d="m16 16 4.2 4.2"/></svg><input type="search" placeholder="جستجو..." aria-label="جستجو"><span class="shortcut">Ctrl + K</span></label>
+  </div>
+  <div class="actions">
+    <button class="action" aria-label="اعلان‌ها"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.5-2v-4.2a4.5 4.5 0 0 0-9 0V15z"/><path d="M10 20h4"/></svg><span class="badge"></span></button>
+    <button class="action" aria-label="رفرش"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8V4m0 0h-4m4 0-3 3a7 7 0 1 0 1.5 8.5"/></svg></button>
+    <button class="action" aria-label="پیام‌ها"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v11H9l-4 3z"/><path d="M8 9h8M8 12h5"/></svg><span class="badge"></span></button>
+    <div class="profile">
+      <div class="avatar"><img src="data:image/jpeg;base64,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" alt=""></div>
+      <div class="profile-copy"><div class="profile-name">مدیر</div><div class="profile-role"><span class="dot"></span> ادمین کل</div></div>
+    </div>
+  </div>
+</header>
+
+<section class="welcome">
+  <h1>خوش آمدید، مدیر</h1>
+  <p>نمای کلی سیستم TiTaN</p>
+</section>
+
+<section class="stats">
+  <article class="card users"><div class="card-inner"><div class="card-icon"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c.7-3.8 3.1-6 7-6s6.3 2.2 7 6"/></svg></span></div><div class="card-copy"><div class="card-title">کاربران فعال</div><div class="card-number">1</div><div class="card-meta">از 1 کاربر</div></div></div></article>
+  <article class="card traffic"><div class="card-inner"><div class="card-icon"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7m5 10V4m5 13v-7m5 7V5"/><path d="m4 15 5-5 4 3 6-7"/></svg></span></div><div class="card-copy"><div class="card-title">ترافیک مصرفی</div><div class="card-number">162.3 MB</div><div class="card-meta">MB ↓ 152.7 &nbsp; ↑ 9.6</div></div></div></article>
+  <article class="card servers"><div class="card-inner"><div class="card-icon"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></span></div><div class="card-copy"><div class="card-title">تعداد سرورها</div><div class="card-number">1</div><div class="card-meta"><span class="green">● 1 آنلاین</span></div></div></div></article>
+  <article class="card configs"><div class="card-inner"><div class="card-icon"><span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 11h6M9 15h6"/></svg></span></div><div class="card-copy"><div class="card-title">کانفیگ‌های فعال</div><div class="card-number">1</div><div class="card-meta">از 1 کانفیگ</div></div></div></article>
+</section>
+
+<section class="lower">
+<article class="panel chart-panel">
+  <div class="panel-head">
+    <div><div class="panel-title">نمودار ترافیک <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18V8m5 10V5m5 13v-7m5 7V4"/><path d="M3 19h18"/></svg></span></div><div class="panel-sub">مصرف در 7 روز گذشته</div></div>
+    <div class="panel-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17V7m5 10V4m5 13v-7m5 7V5"/><path d="m4 15 5-5 4 3 6-7"/></svg></div>
+  </div>
+  <div class="chart-area">
+    <div class="y-axis"><span>200 MB</span><span>150 MB</span><span>100 MB</span><span>50 MB</span><span>0</span></div>
+    <div class="grid-lines"></div>
+    <svg class="chart-svg" viewBox="0 0 760 190" preserveAspectRatio="none" aria-label="نمودار ترافیک">
+      <defs>
+        <linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a14fff" stop-opacity=".35"/><stop offset="1" stop-color="#a14fff" stop-opacity="0"/></linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="4.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M18 177L126 176L234 174L342 156L450 118L558 107L742 26L742 190L18 190Z" fill="url(#area)"/>
+      <path d="M18 177L126 176L234 174L342 156L450 118L558 107L742 26" fill="none" stroke="#9b49ff" stroke-width="2.2" filter="url(#glow)"/>
+      <path d="M18 177L126 176L234 174L342 156L450 118L558 107L742 26" fill="none" stroke="#b45cff" stroke-width="1.1"/>
+      <g fill="#b65cff" stroke="#170d37" stroke-width="2" filter="url(#glow)">
+        <circle cx="18" cy="177" r="4"/><circle cx="126" cy="176" r="4"/><circle cx="234" cy="174" r="4"/><circle cx="342" cy="156" r="4"/><circle cx="450" cy="118" r="4"/><circle cx="558" cy="107" r="4"/><circle cx="742" cy="26" r="5"/>
+      </g>
+    </svg>
+    <div class="chart-x"><span>۳ شهریور</span><span>۳ شهریور</span><span>۴ شهریور</span><span>۵ شهریور</span><span>۶ شهریور</span><span>۷ شهریور</span><span>۸ شهریور</span></div>
+  </div>
+</article>
+
+<article class="panel server-panel">
+  <div class="panel-head"><div><div class="panel-title"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.1 2.3 3.2 5 3.2 8s-1.1 5.7-3.2 8c-2.1-2.3-3.2-5-3.2-8S9.9 6.3 12 4z"/></svg> وضعیت سرورها</div></div></div>
+  <div class="server-content">
+    <div class="server-row">
+      <div class="latency">2ms<small>تاخیر</small></div>
+      <div class="status">آنلاین</div>
+      <div class="location"><span class="flag" aria-hidden="true">🇺🇸</span><span>Ashburn, VA</span></div>
+    </div>
+  </div>
+  <a class="server-link" href="#">مشاهده همه سرورها ←</a>
+</article>
+</section>
+
+<section class="recent-grid">
+  <article class="recent-panel users-table">
+    <div class="recent-head">
+      <div class="recent-title">کاربران اخیر</div>
+      <a class="recent-all" href="#">مشاهده همه</a>
+    </div>
+    <div class="recent-table">
+      <div class="recent-table-head"><div>کاربر</div><div>ترافیک مصرفی</div><div>وضعیت</div></div>
+      <div class="recent-table-row">
+        <div class="recent-user"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span><span class="recent-name">Test</span></div>
+        <div class="recent-traffic">923.5 MB</div>
+        <div class="recent-status">فعال</div>
+      </div>
+      <div class="recent-table-row">
+        <div class="recent-user"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span><span class="recent-name">Tesy</span></div>
+        <div class="recent-traffic">0 B</div>
+        <div class="recent-status">فعال</div>
+      </div>
+      <div class="recent-table-row">
+        <div class="recent-user"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span><span class="recent-name">Netherlands</span></div>
+        <div class="recent-traffic">0 B</div>
+        <div class="recent-status">فعال</div>
+      </div>
+    </div>
+  </article>
+
+  <article class="recent-panel configs-table">
+    <div class="recent-head">
+      <div class="recent-title">آخرین کانفیگ‌ها</div>
+      <a class="recent-all" href="#">مشاهده همه</a>
+    </div>
+    <div class="recent-table">
+      <div class="recent-table-head"><div>نام</div><div>نوع</div><div>سرور</div><div>وضعیت</div></div>
+      <div class="recent-table-row">
+        <div class="recent-config"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAA4ADcDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD8D61tA8LnU7catqd0LXTxJtMxXLSkdVQdz9cAfpUfhXw9L4j1iOwTGxVMs3X/AFaqXbp7Lj6kV0ttFLql7Je3umXkNnahWs4EgxGsQIznOOo9M9a+oppPV7HBUqezhcu+BPClz4rjvJ/BaeHdKjtJFVrjxHrdvDLIGBI2idlHbnaPxro2+GvjqyVRP8b/AIeFHcI9sPEti+MjuFycfSp/gZq8Era1a2H7Klv8RLv7VFIJpY79hZRBXUL5dpIqgEjGW/nXe61d/Ep43vrP/gnDoNhGJQG8zw7qbqeGUKfMnxyR3HQ0S5uW6Whl7Sba0PHNV+FuunQ7zxVeeEvP0WyvGtZPE2gLvtPOCqxUEEq/DrnB43Z5rh9Y0W80p0eUb4H5huEB2yAjPcDmvebmy+Kms2F7aXHwYudNt4tUuZI9HsLKeKwspnhgikCRFirEiNe5PJNcNN8KPGZE9hqPgG7gtLmYEytbbFtmxgMCz8ZbAIx0Jro5Y+zTRlQrylVcZHmLA43EYz2PWirF5Y3VhcSWd4gWWF2jnQ9UIbGD+VFZOLvoduh0fw21DxZ4fstU8SeBdTv7LVoooYbS60uZ47iMSMWco0eGHyowOD90kHgmvTPgn4w/aP8AHnjGDSvGXinxhrOhNiPUrXV9cme3O4FVLLM4VgHKnHOMZHIFeRaFdyR+GdXt4WIf/RZAV/uq5U/+hg/QGum8Of2naahB4w0S5inu7WMNZkYVPMxgfLgDj60Tr5Zh4x9u5X8tg9jUrJxidt4o06y+Hf7RF94YtUv7TRpLq1l1lLO4ELGBY1aQIN5jYZZ9u8nJx908jgviP8SZ31K40vRLrfaxuES78wGUqAQDkAc4JB471R8beNvGet6tNqXxKvp5Li4kDvFCyAHAA5AOccDj2rkr3ULOSRZ4IZd2SZTIyndzxjiu7G8R4OGV/VsFDVu7bt9xNPAzhNSm/Kx7b8GPE3wYvPh02meNLLVF14X87/azqA+yyRMibP3W0nzNynLehrg/iPLZQss+i6hEys+YZoCASPYgBuO+QK9k/Y6+Mv7BXw38GXkX7SXw98ceINduJj9mj8P31pa2aKePm8yORm6/3Py6j0Hxr8Bf+Cd/7VfjS2+Hv7F/xZ8XeCdcvlhXR9M+JjRjR7u5dMvapeRY+zyFjgGSPyyRgsudw+VqcaR5fqtTCSSX20tPw1PYeTYeUFVpVE32Pkrx6EudXi1RFKm/sLe6lG0YMrRqW/Uk0Ve+MGhX/g7x9f8AgDVJbZrvw46aVe/Y7lZojPbr5Uux1JDrvU4YcHqOKK9mniKU4KV9zzJwnCVmc9oGqS6LqSXgAZCjRzxldwZGBDcfQn8a7HxF4ztfDEFvZ6NBm3NupgPkqAUznGQT0PNcKp2nIrS0vXLGK3bS9c083NixJWNXw0L/AN5T/TpXTSxFOlRnCVKMubZtXsKMpQldGZr+rXWtX8mpX0gLyfd6Yx7VnkgDJ/nW63hP+0d//CM6hHdJ1MMg2TL7EHg/gar/APCDeLiefDl2FB5cwEJ/31jA/OvmauHxHPZx+46FNPVsy4G/eDCg5BBBGeox6da6rwPdW9i/9uX1qDa2ucK//LZ+cR+hBLAN325xziqcHhaw0qXzfEmqJkc/ZLKQSOfYkcL9c/meKZrOtPqTLbpAtvbRrthtohkIPXPdvVq9PLFPAzdRq3yvczqSbVouxHdambuWSW4VWd5C7soxknHT0xyB9TRVONUXO/PtiiumTcnd6krke7LexfSkZPlO1Rn3oorZqxmNEOCPlU4/iYbi31yMU/hV5QfQcD9MUUVLSeom2iMkKOVB/wBrHP6VFIMndRRSsmCdxoGTiiiinyoZ/9k=" alt="پروفایل کاربر"></span><span class="recent-name">Test</span></div>
+        <div>VLESS</div>
+        <div class="recent-server"><span class="flag">🇺🇸</span><span>San Jose, CA</span></div>
+        <div class="recent-status">فعال</div>
+      </div>
+      <div class="recent-table-row">
+        <div class="recent-config"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAA4ADcDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD8D61tA8LnU7catqd0LXTxJtMxXLSkdVQdz9cAfpUfhXw9L4j1iOwTGxVMs3X/AFaqXbp7Lj6kV0ttFLql7Je3umXkNnahWs4EgxGsQIznOOo9M9a+oppPV7HBUqezhcu+BPClz4rjvJ/BaeHdKjtJFVrjxHrdvDLIGBI2idlHbnaPxro2+GvjqyVRP8b/AIeFHcI9sPEti+MjuFycfSp/gZq8Era1a2H7Klv8RLv7VFIJpY79hZRBXUL5dpIqgEjGW/nXe61d/Ep43vrP/gnDoNhGJQG8zw7qbqeGUKfMnxyR3HQ0S5uW6Whl7Sba0PHNV+FuunQ7zxVeeEvP0WyvGtZPE2gLvtPOCqxUEEq/DrnB43Z5rh9Y0W80p0eUb4H5huEB2yAjPcDmvebmy+Kms2F7aXHwYudNt4tUuZI9HsLKeKwspnhgikCRFirEiNe5PJNcNN8KPGZE9hqPgG7gtLmYEytbbFtmxgMCz8ZbAIx0Jro5Y+zTRlQrylVcZHmLA43EYz2PWirF5Y3VhcSWd4gWWF2jnQ9UIbGD+VFZOLvoduh0fw21DxZ4fstU8SeBdTv7LVoooYbS60uZ47iMSMWco0eGHyowOD90kHgmvTPgn4w/aP8AHnjGDSvGXinxhrOhNiPUrXV9cme3O4FVLLM4VgHKnHOMZHIFeRaFdyR+GdXt4WIf/RZAV/uq5U/+hg/QGum8Of2naahB4w0S5inu7WMNZkYVPMxgfLgDj60Tr5Zh4x9u5X8tg9jUrJxidt4o06y+Hf7RF94YtUv7TRpLq1l1lLO4ELGBY1aQIN5jYZZ9u8nJx908jgviP8SZ31K40vRLrfaxuES78wGUqAQDkAc4JB471R8beNvGet6tNqXxKvp5Li4kDvFCyAHAA5AOccDj2rkr3ULOSRZ4IZd2SZTIyndzxjiu7G8R4OGV/VsFDVu7bt9xNPAzhNSm/Kx7b8GPE3wYvPh02meNLLVF14X87/azqA+yyRMibP3W0nzNynLehrg/iPLZQss+i6hEys+YZoCASPYgBuO+QK9k/Y6+Mv7BXw38GXkX7SXw98ceINduJj9mj8P31pa2aKePm8yORm6/3Py6j0Hxr8Bf+Cd/7VfjS2+Hv7F/xZ8XeCdcvlhXR9M+JjRjR7u5dMvapeRY+zyFjgGSPyyRgsudw+VqcaR5fqtTCSSX20tPw1PYeTYeUFVpVE32Pkrx6EudXi1RFKm/sLe6lG0YMrRqW/Uk0Ve+MGhX/g7x9f8AgDVJbZrvw46aVe/Y7lZojPbr5Uux1JDrvU4YcHqOKK9mniKU4KV9zzJwnCVmc9oGqS6LqSXgAZCjRzxldwZGBDcfQn8a7HxF4ztfDEFvZ6NBm3NupgPkqAUznGQT0PNcKp2nIrS0vXLGK3bS9c083NixJWNXw0L/AN5T/TpXTSxFOlRnCVKMubZtXsKMpQldGZr+rXWtX8mpX0gLyfd6Yx7VnkgDJ/nW63hP+0d//CM6hHdJ1MMg2TL7EHg/gar/APCDeLiefDl2FB5cwEJ/31jA/OvmauHxHPZx+46FNPVsy4G/eDCg5BBBGeox6da6rwPdW9i/9uX1qDa2ucK//LZ+cR+hBLAN325xziqcHhaw0qXzfEmqJkc/ZLKQSOfYkcL9c/meKZrOtPqTLbpAtvbRrthtohkIPXPdvVq9PLFPAzdRq3yvczqSbVouxHdambuWSW4VWd5C7soxknHT0xyB9TRVONUXO/PtiiumTcnd6krke7LexfSkZPlO1Rn3oorZqxmNEOCPlU4/iYbi31yMU/hV5QfQcD9MUUVLSeom2iMkKOVB/wBrHP6VFIMndRRSsmCdxoGTiiiinyoZ/9k=" alt="پروفایل کاربر"></span><span class="recent-name">Tesy</span></div>
+        <div>VLESS</div>
+        <div class="recent-server"><span class="flag">🇺🇸</span><span>San Jose, CA</span></div>
+        <div class="recent-status">فعال</div>
+      </div>
+      <div class="recent-table-row">
+        <div class="recent-config"><span class="recent-avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span><span class="recent-name">Netherlands</span></div>
+        <div>VLESS</div>
+        <div class="recent-server"><span class="flag">🇳🇱</span><span>Amsterdam</span></div>
+        <div class="recent-status">فعال</div>
+      </div>
+    </div>
+  </article>
+</section>
+
+</main>
+</div>
+
+<!-- Detailed interactive sidebar section views -->
+<div id="sectionViews" aria-live="polite">
+<section class="section-view" data-section="users">
+ <div class="section-head"><div><h2>کاربران</h2><p>مدیریت کاربران و دسترسی‌های فعال پنل</p></div><div class="section-actions"><button class="section-btn primary ico-btn lg" data-tip="کاربر جدید" aria-label="کاربر جدید"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c.7-3.6 3-5.7 6-5.7s5.3 2.1 6 5.7"/><path d="M18 8v6M15 11h6"/></svg></button><button class="section-btn ico-btn lg" data-tip="خروجی گرفتن از کاربران" aria-label="خروجی گرفتن از کاربران"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5"/><path d="M4 19h16"/></svg></button></div></div>
+ <div class="section-toolbar"><input class="section-search" placeholder="جستجوی کاربر، نام یا شناسه..." data-filter="users"><div class="section-actions"><button class="section-btn">همه کاربران</button><button class="section-btn">فعال</button><button class="section-btn">منقضی</button></div></div>
+ <div class="section-grid three"><article class="detail-card"><h3>کاربران فعال</h3><div class="metric-row"><span>تعداد کل</span><strong>3</strong></div><div class="metric-row"><span>در حال اتصال</span><strong>2</strong></div><div class="metric-row"><span>غیرفعال</span><strong>0</strong></div></article><article class="detail-card"><h3>مصرف ترافیک</h3><div class="metric-row"><span>مصرف امروز</span><strong>923.5 MB</strong></div><div class="metric-row"><span>کل مصرف</span><strong>1.24 GB</strong></div><div class="progress"><span style="width:68%"></span></div></article><article class="detail-card"><h3>وضعیت اشتراک</h3><div class="metric-row"><span>فعال</span><span class="pill">● 3 حساب</span></div><div class="metric-row"><span>نزدیک به انقضا</span><span class="pill warn">1 حساب</span></div><div class="metric-row"><span>منقضی</span><span class="pill off">0 حساب</span></div></article></div>
+ <article class="detail-card data-card" style="margin-top:14px"><div class="card-title"><h3 style="margin:0">فهرست کاربران</h3><span class="muted">۳ مورد</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>کاربر</th><th>شناسه</th><th>مصرف</th><th>انقضا</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Test</span></td><td class="muted">#1001</td><td>923.5 MB</td><td>30 روز</td><td><span class="pill">فعال</span></td><td><button class="ico-btn row-ico" data-tip="جزئیات" aria-label="جزئیات"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></td></tr><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Tesy</span></td><td class="muted">#1002</td><td>0 B</td><td>30 روز</td><td><span class="pill">فعال</span></td><td><button class="ico-btn row-ico" data-tip="جزئیات" aria-label="جزئیات"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></td></tr><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Netherlands</span></td><td class="muted">#1003</td><td>0 B</td><td>30 روز</td><td><span class="pill">فعال</span></td><td><button class="ico-btn row-ico" data-tip="جزئیات" aria-label="جزئیات"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></td></tr></tbody></table></div></article>
+</section>
+<section class="section-view" data-section="configs">
+ <div class="section-head"><div><h2>کانفیگ‌ها</h2><p>ساخت، مدیریت و کنترل کانفیگ‌های اتصال</p></div><div class="section-actions"><button class="section-btn primary ico-btn lg" data-tip="ساخت کانفیگ جدید" aria-label="ساخت کانفیگ جدید"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.5 15.5l.7 1.9 1.8.6-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.6.7-1.9z"/></svg></button><button class="section-btn ico-btn lg danger" data-tip="حذف گروهی" aria-label="حذف گروهی"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button></div></div>
+ <div class="section-toolbar"><input class="section-search" placeholder="جستجوی کانفیگ..." data-filter="configs"><div class="section-actions"><button class="section-btn">همه</button><button class="section-btn">VLESS</button><button class="section-btn">فعال</button></div></div>
+ <div class="section-grid three"><article class="detail-card"><h3>کانفیگ‌های فعال</h3><div class="metric-row"><span>کل کانفیگ‌ها</span><strong>3</strong></div><div class="metric-row"><span>فعال</span><strong>3</strong></div><div class="metric-row"><span>منقضی</span><strong>0</strong></div></article><article class="detail-card"><h3>پروتکل‌های استفاده‌شده</h3><div class="metric-row"><span>VLESS</span><span class="pill">3 مورد</span></div><div class="metric-row"><span>VMess</span><span class="muted">0 مورد</span></div><div class="metric-row"><span>Trojan</span><span class="muted">0 مورد</span></div></article><article class="detail-card"><h3>اشتراک‌گذاری</h3><div class="metric-row"><span>لینک‌های فعال</span><strong>3</strong></div><div class="metric-row"><span>QR تولیدشده</span><strong>3</strong></div><div class="metric-row"><span>آخرین بروزرسانی</span><strong>امروز</strong></div></article></div>
+ <article class="detail-card data-card" style="margin-top:14px"><div class="card-title"><h3 style="margin:0">آخرین کانفیگ‌ها</h3><span class="muted">VLESS</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>نام</th><th>پروتکل</th><th>سرور</th><th>پورت</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Test</span></td><td>VLESS</td><td>🇺🇸 San Jose, CA</td><td>443</td><td><span class="pill">فعال</span></td><td><button class="ico-btn gold row-ico" data-tip="ویرایش" aria-label="ویرایش"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></td></tr><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Tesy</span></td><td>VLESS</td><td>🇺🇸 San Jose, CA</td><td>443</td><td><span class="pill">فعال</span></td><td><button class="ico-btn gold row-ico" data-tip="ویرایش" aria-label="ویرایش"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></td></tr><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Netherlands</span></td><td>VLESS</td><td>🇳🇱 Amsterdam</td><td>443</td><td><span class="pill">فعال</span></td><td><button class="ico-btn gold row-ico" data-tip="ویرایش" aria-label="ویرایش"><svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button></td></tr></tbody></table></div></article>
+</section>
+<section class="section-view" data-section="servers">
+ <div class="section-head"><div><h2>سرورها <span class="muted">(Nodes)</span></h2><p>مدیریت نودها، سلامت اتصال و وضعیت سرویس‌ها</p></div><div class="section-actions"><button class="section-btn primary ico-btn lg" data-tip="افزودن سرور (نود جدید)" aria-label="افزودن سرور (نود جدید)"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z"/></svg></button><button class="section-btn ico-btn lg" data-tip="پینگ‌سنج — اندازه‌گیری از همین دستگاه" aria-label="پینگ‌سنج"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></button></div></div>
+ <div class="section-grid three"><article class="detail-card"><h3>وضعیت نودها</h3><div class="metric-row"><span>کل سرورها</span><strong>2</strong></div><div class="metric-row"><span>آنلاین</span><span class="pill">● 2</span></div><div class="metric-row"><span>آفلاین</span><span class="pill off">0</span></div></article><article class="detail-card"><h3>سلامت اتصال</h3><div class="metric-row"><span>میانگین پینگ</span><strong>50 ms</strong></div><div class="metric-row"><span>پایداری</span><strong>99.9%</strong></div><div class="progress"><span style="width:99%"></span></div></article><article class="detail-card"><h3>وضعیت سرویس</h3><div class="metric-row"><span>وضعیت پنل</span><span class="pill">سالم</span></div><div class="metric-row"><span>اتصال نودها</span><span class="pill">برقرار</span></div><div class="progress"><span style="width:100%"></span></div></article></div>
+</section>
+<section class="section-view" data-section="subscriptions">
+ <div class="section-head"><div><h2>اشتراک‌ها</h2><p>ساخت لینک اشتراک از بین کانفیگ‌ها و کاربران</p></div><div class="section-actions"><button class="section-btn primary ico-btn lg" data-tip="ساخت لینک اشتراک جدید" aria-label="ساخت لینک اشتراک جدید"><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.5 15.5l.7 1.9 1.8.6-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.6.7-1.9z"/></svg></button></div></div>
+ <article class="detail-card data-card subscription-reference-card">
+  <div class="table-scroll">
+   <table class="data-table subscription-table">
+    <thead><tr><th>لینک اشتراک</th><th>وضعیت</th><th>کاربران</th><th>کانفیگ‌ها</th><th>استفاده</th><th>عملیات</th></tr></thead>
+    <tbody>
+     <tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Netherlands</span></td><td><span class="pill">فعال</span></td><td>هرگز</td><td>1</td><td>0 B</td><td><button class="mini-btn" data-demo="مدیریت اشتراک Netherlands"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 4v7h-7"/></svg></span></button><button class="mini-btn" data-demo="نمایش اشتراک Netherlands"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></svg></span></button><button class="mini-btn" data-demo="QR اشتراک Netherlands"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h3v3h-6v-6Z"/></svg></span></button><button class="mini-btn" data-demo="کپی اشتراک Netherlands"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span></button></td></tr>
+     <tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Tesy</span></td><td><span class="pill">فعال</span></td><td>هرگز</td><td>1</td><td>429.0 MB</td><td><button class="mini-btn" data-demo="مدیریت اشتراک Tesy"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 4v7h-7"/></svg></span></button><button class="mini-btn" data-demo="نمایش اشتراک Tesy"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></svg></span></button><button class="mini-btn" data-demo="QR اشتراک Tesy"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h3v3h-6v-6Z"/></svg></span></button><button class="mini-btn" data-demo="کپی اشتراک Tesy"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span></button></td></tr>
+     <tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Netherlands</span></td><td><span class="pill">فعال</span></td><td>هرگز</td><td>1</td><td>0 B</td><td><button class="mini-btn" data-demo="مدیریت اشتراک Netherlands دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 4v7h-7"/></svg></span></button><button class="mini-btn" data-demo="نمایش اشتراک Netherlands دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></svg></span></button><button class="mini-btn" data-demo="QR اشتراک Netherlands دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h3v3h-6v-6Z"/></svg></span></button><button class="mini-btn" data-demo="کپی اشتراک Netherlands دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span></button></td></tr>
+     <tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Tesy</span></td><td><span class="pill">فعال</span></td><td>هرگز</td><td>1</td><td>0 B</td><td><button class="mini-btn" data-demo="مدیریت اشتراک Tesy دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 4v7h-7"/></svg></span></button><button class="mini-btn" data-demo="نمایش اشتراک Tesy دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></svg></span></button><button class="mini-btn" data-demo="QR اشتراک Tesy دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h3v3h-6v-6Z"/></svg></span></button><button class="mini-btn" data-demo="کپی اشتراک Tesy دوم"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span></button></td></tr>
+     <tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>Test</span></td><td><span class="pill">فعال</span></td><td>هرگز</td><td>1</td><td>939.9 MB</td><td><button class="mini-btn" data-demo="مدیریت اشتراک Test"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0 2 5"/><path d="M20 4v7h-7"/></svg></span></button><button class="mini-btn" data-demo="نمایش اشتراک Test"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></svg></span></button><button class="mini-btn" data-demo="QR اشتراک Test"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3h3v3h-6v-6Z"/></svg></span></button><button class="mini-btn" data-demo="کپی اشتراک Test"><span class="subscription-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg></span></button></td></tr>
+    </tbody>
+   </table>
+  </div>
+ </article>
+</section>
+<section class="section-view" data-section="reports">
+ <div class="section-head"><div><h2>گزارش‌ها</h2><p>نمایش آماری مصرف، کاربران و رویدادهای پنل</p></div><div class="section-actions"><button class="section-btn primary" data-demo="دریافت گزارش">دریافت گزارش</button></div></div>
+ <div class="section-toolbar"><div class="section-actions"><button class="section-btn">امروز</button><button class="section-btn">۷ روز اخیر</button><button class="section-btn">۳۰ روز اخیر</button></div><button class="section-btn">فیلتر تاریخ ▾</button></div>
+ <div class="section-grid three"><article class="detail-card"><h3>مصرف ترافیک</h3><div class="metric-row"><span>دانلود</span><strong>923.5 MB</strong></div><div class="metric-row"><span>آپلود</span><strong>320 MB</strong></div><div class="progress"><span style="width:72%"></span></div></article><article class="detail-card"><h3>رشد کاربران</h3><div class="metric-row"><span>کاربر جدید</span><strong>3</strong></div><div class="metric-row"><span>کاربر فعال</span><strong>3</strong></div><div class="metric-row"><span>نرخ فعالیت</span><strong>100%</strong></div></article><article class="detail-card"><h3>رویدادهای سیستم</h3><div class="metric-row"><span>ورود موفق</span><strong>12</strong></div><div class="metric-row"><span>خطاها</span><strong>0</strong></div><div class="metric-row"><span>بررسی نودها</span><strong>24</strong></div></article></div>
+ <article class="detail-card" style="margin-top:14px"><h3>نمودار مصرف هفتگی</h3><div class="chart-mini"><span style="height:35%"></span><span style="height:52%"></span><span style="height:42%"></span><span style="height:72%"></span><span style="height:60%"></span><span style="height:88%"></span><span style="height:66%"></span></div><div class="metric-row"><span class="muted">شنبه تا جمعه</span><strong>مجموع 1.24 GB</strong></div></article>
+ <article class="detail-card data-card" style="margin-top:14px"><div class="card-title"><h3 style="margin:0">آخرین رویدادها</h3><span class="muted">ثبت فعالیت‌ها</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>رویداد</th><th>کاربر</th><th>زمان</th><th>نتیجه</th></tr></thead><tbody><tr><td>ورود به پنل</td><td>مدیر</td><td>همین لحظه</td><td><span class="pill">موفق</span></td></tr><tr><td>بررسی سرور</td><td>سیستم</td><td>۲ دقیقه قبل</td><td><span class="pill">موفق</span></td></tr><tr><td>ساخت کانفیگ</td><td>Test</td><td>۱۰ دقیقه قبل</td><td><span class="pill">موفق</span></td></tr></tbody></table></div></article>
+</section>
+<section class="section-view" data-section="settings">
+ <div class="section-head"><div><h2>تنظیمات</h2><p>پیکربندی عمومی پنل</p></div><div class="section-actions"><button class="section-btn primary" data-demo="ذخیره تغییرات">ذخیره ✓</button></div></div>
+ <div class="section-grid">
+  <article class="detail-card"><h3>عمومی</h3><div class="form-grid"><div class="field full"><label>دامنه عمومی (اختیاری)</label><input placeholder="example.com"></div><div class="field"><label>پورت عمومی پنل (پیش‌فرض 443)</label><input value="443"></div><div class="field"><label>زبان پنل</label><select><option>فارسی</option><option>English</option></select></div></div><p class="sub" style="margin-top:12px">دامنه‌ای که کلاینت‌ها برای اتصال به پنل استفاده می‌کنند. اگر خالی باشد از آدرس فعلی استفاده می‌شود.</p></article>
+  <article class="detail-card"><h3>امنیت</h3><div class="notice">رمز عبور هنوز تنظیم نشده است. برای امنیت، یک رمز عبور قوی انتخاب کنید.</div><div class="field"><label>رمز عبور فعلی</label><input type="password" placeholder="••••••••"></div><div class="field" style="margin-top:10px"><label>رمز عبور جدید</label><input type="password" placeholder="رمز عبور جدید"></div><button class="mini-btn" style="margin-top:12px" data-demo="تغییر رمز عبور">تغییر رمز عبور ↗</button></article>
+  <article class="detail-card"><h3>تصویر پروفایل</h3><div style="display:grid;place-items:center;gap:10px;padding:8px"><div class="avatar" style="width:72px;height:72px;border-radius:22px;font-size:27px;box-shadow:0 0 28px rgba(126,70,255,.3)">◈</div><p class="sub" style="text-align:center">برای خود و کاربران، یک تصویر انتخاب کنید. پیشنهاد می‌شود از لوگوی TiTaN استفاده شود.</p><button class="section-btn primary" data-demo="انتخاب از گالری">انتخاب از گالری ↗</button></div></article>
+  <article class="detail-card"><h3>شبکه</h3><div class="field"><label>پروتکل اتصال پیش‌فرض</label><select><option>WS</option><option>TCP</option><option>GRPC</option></select></div><div class="field" style="margin-top:10px"><label>Fingerprint پیش‌فرض</label><select><option>chrome</option><option>firefox</option><option>safari</option></select></div><div class="field" style="margin-top:10px"><label>ALPN پیش‌فرض</label><input value="http/1.1"></div><div class="field" style="margin-top:10px"><label>SNI سفارشی (اختیاری)</label><input placeholder=""></div></article>
+  <article class="detail-card"><h3>پشتیبان‌گیری</h3><div class="toggle-row"><span>پشتیبان‌گیری خودکار</span><span class="switch on"></span></div><div class="field" style="margin-top:12px"><label>بازه پشتیبان‌گیری (ساعت)</label><input value="24"></div><div class="section-actions" style="margin-top:12px"><button class="mini-btn" data-demo="دانلود پشتیبان">دانلود پشتیبان ↓</button><button class="mini-btn" data-demo="بازیابی پشتیبان">بازیابی از پشتیبان ↑</button></div></article>
+  <article class="detail-card"><h3>سیستم</h3><div class="toggle-row"><span>مسدودسازی IPهای خصوصی</span><span class="switch on"></span></div><div class="toggle-row"><span>مسدودسازی تبلیغات</span><span class="switch on"></span></div><div class="toggle-row"><span>مسدودسازی سایت‌های ایرانی</span><span class="switch"></span></div><div class="toggle-row"><span>اعلان اتصال جدید</span><span class="switch"></span></div><div class="toggle-row"><span>فعال‌سازی Fragment</span><span class="switch"></span></div><div class="form-grid" style="margin-top:12px"><div class="field"><label>طول Fragment</label><input value="10-30"></div><div class="field"><label>بازه Fragment</label><input value="10-20"></div></div><button class="section-btn danger-btn" style="margin-top:14px;width:100%" data-demo="راه‌اندازی مجدد پنل">⏻ راه‌اندازی مجدد پنل</button></article>
+ </div>
+</section>
+<section class="section-view" data-section="admins">
+ <div class="section-head"><div><h2>مدیریت ادمین</h2><p>مدیریت مدیران پنل و سطح دسترسی آن‌ها</p></div><div class="section-actions"><button class="section-btn primary" data-demo="افزودن ادمین">+ افزودن ادمین</button></div></div>
+ <div class="section-grid three"><article class="detail-card"><h3>مدیران پنل</h3><div class="metric-row"><span>تعداد مدیران</span><strong>1</strong></div><div class="metric-row"><span>فعال</span><span class="pill">1</span></div><div class="metric-row"><span>آخرین ورود</span><strong>همین لحظه</strong></div></article><article class="detail-card"><h3>سطح دسترسی</h3><div class="metric-row"><span>مدیریت کاربران</span><span class="pill">مجاز</span></div><div class="metric-row"><span>مدیریت سرورها</span><span class="pill">مجاز</span></div><div class="metric-row"><span>تنظیمات سیستم</span><span class="pill">مجاز</span></div></article><article class="detail-card"><h3>امنیت مدیران</h3><div class="toggle-row"><span>ثبت فعالیت مدیران</span><span class="switch on"></span></div><div class="toggle-row"><span>محدودیت نشست همزمان</span><span class="switch on"></span></div></article></div>
+ <article class="detail-card data-card" style="margin-top:14px"><div class="card-title"><h3 style="margin:0">فهرست ادمین‌ها</h3><span class="muted">۱ مدیر</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>مدیر</th><th>نقش</th><th>آخرین ورود</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody><tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="data:image/jpeg;base64,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" alt="پروفایل کاربر"></span>مدیر اصلی</span></td><td>Owner</td><td>همین لحظه</td><td><span class="pill">فعال</span></td><td><button class="mini-btn">ویرایش</button></td></tr></tbody></table></div></article>
+</section>
+<section class="section-view" data-section="tools">
+ <div class="section-head"><div><h2>ابزارها</h2><p>ابزارهای کاربردی برای نگهداری، بررسی و عیب‌یابی پنل</p></div></div>
+ <div class="section-grid three"><article class="detail-card"><h3>تست اتصال</h3><p class="sub">بررسی دسترسی به نودها و سرویس‌های شبکه</p><button class="section-btn primary" style="width:100%" data-demo="تست اتصال">اجرای تست اتصال</button></article><article class="detail-card"><h3>پاک‌سازی</h3><p class="sub">حذف داده‌های موقت و مرتب‌سازی اطلاعات قدیمی</p><button class="section-btn" style="width:100%" data-demo="پاک‌سازی داده‌های موقت">پاک‌سازی داده‌ها</button></article><article class="detail-card"><h3>پشتیبان‌گیری</h3><p class="sub">تهیه نسخه پشتیبان از تنظیمات و داده‌های پنل</p><button class="section-btn" style="width:100%" data-demo="تهیه نسخه پشتیبان">ساخت نسخه پشتیبان</button></article><article class="detail-card"><h3>بررسی سلامت سیستم</h3><div class="metric-row"><span>سرویس پنل</span><span class="pill">سالم</span></div><div class="metric-row"><span>پایگاه داده</span><span class="pill">سالم</span></div><div class="metric-row"><span>اتصال نودها</span><span class="pill">سالم</span></div></article><article class="detail-card"><h3>لاگ سیستم</h3><div class="metric-row"><span>رویدادهای ثبت‌شده</span><strong>24</strong></div><div class="metric-row"><span>خطاهای اخیر</span><strong>0</strong></div><button class="mini-btn" style="margin-top:10px" data-demo="نمایش لاگ سیستم">نمایش لاگ‌ها</button></article><article class="detail-card"><h3>ابزارهای سریع</h3><div class="section-actions" style="flex-wrap:wrap"><button class="mini-btn" data-demo="پاک‌سازی کش">پاک‌سازی کش</button><button class="mini-btn" data-demo="بررسی پورت">بررسی پورت</button><button class="mini-btn" data-demo="بازنشانی وضعیت">بازنشانی وضعیت</button></div></article></div>
+</section>
+</div>
+<script>
+(function(){
+  const navItems=[...document.querySelectorAll('.nav-item')];
+  const views=[...document.querySelectorAll('.section-view')];
+  const map=['dashboard','users','configs','servers','subscriptions','reports','settings','admins','tools'];
+  const dashboardSelectors=['.stats','.lower','.recent-grid'];
+  function show(key,index){
+    navItems.forEach((el,i)=>el.classList.toggle('active',i===index));
+    views.forEach(v=>v.classList.toggle('active',v.dataset.section===key));
+    dashboardSelectors.forEach(sel=>document.querySelectorAll(sel).forEach(el=>el.style.display=key==='dashboard'?'':'none'));
+    const title=document.querySelector('.page-title, .content-title, main h1');
+    if(key!=='dashboard' && views.some(v=>v.dataset.section===key)){
+      const active=views.find(v=>v.dataset.section===key); if(active && active.parentElement!==document.querySelector('main')){
+        const main=document.querySelector('main'); if(main) main.appendChild(document.getElementById('sectionViews'));
+      }
+    }
+  }
+  navItems.forEach((el,i)=>el.addEventListener('click',()=>show(map[i]||'dashboard',i)));
+  document.querySelectorAll('[data-demo]').forEach(btn=>btn.addEventListener('click',()=>{
+    const old=btn.textContent; btn.textContent='✓ انجام شد'; btn.disabled=true;
+    setTimeout(()=>{btn.textContent=old;btn.disabled=false},1100);
+  }));
+  document.querySelectorAll('[data-filter]').forEach(input=>input.addEventListener('input',()=>{
+    const view=input.closest('.section-view'); const q=input.value.trim().toLowerCase();
+    view.querySelectorAll('tbody tr').forEach(row=>row.style.display=row.textContent.toLowerCase().includes(q)?'':'none');
+  }));
+  show('dashboard',0);
+})();
+</script>
+  <script src="/static/js/titan-bridge.js"></script>
+</body>
+</html>
