@@ -627,6 +627,18 @@ button{cursor:pointer}
   background:linear-gradient(180deg,rgba(143,69,255,.18),rgba(9,14,32,.25));border:1px solid rgba(143,69,255,.3);
   box-shadow:inset 0 1px rgba(220,200,255,.1)}
 .nl-medal .fe{font-size:26px;line-height:1}
+/* Live node flags: show the emoji immediately, then prefer a real ISO flag image;
+   if the image host is unavailable, the emoji remains as the fallback. */
+.node-flag-visual{position:relative;display:inline-grid;place-items:center;overflow:hidden;flex:none;vertical-align:middle;border-radius:3px;line-height:1}
+.node-flag-sm{width:24px;height:16px}
+.node-flag-md{width:27px;height:18px}
+.node-flag-lg{width:39px;height:26px;border-radius:4px}
+.node-flag-fallback{display:grid;place-items:center;width:100%;height:100%;font-size:18px;line-height:1;transition:opacity .12s}
+.node-flag-lg .node-flag-fallback{font-size:26px}
+.node-flag-img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;border-radius:inherit;opacity:0;transition:opacity .12s;box-shadow:0 0 0 1px rgba(255,255,255,.16)}
+.node-flag-loaded .node-flag-img{opacity:1}
+.node-flag-loaded .node-flag-fallback{opacity:0}
+.node-flag-failed .node-flag-img{display:none}
 .nl-name{font-weight:800;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:7px}
 .nl-loc{font-size:10.5px;color:var(--muted);margin-top:3px}
 .nl-orb{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);position:relative}

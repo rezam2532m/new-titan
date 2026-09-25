@@ -17,7 +17,6 @@ import pytest
 REPO = pathlib.Path(__file__).resolve().parent.parent
 DASHBOARD = (REPO / "templates" / "dashboard.html").read_text(encoding="utf-8")
 BRIDGE = (REPO / "static" / "js" / "titan-bridge.js").read_text(encoding="utf-8")
-PAGES_JS = (REPO / "static" / "js" / "pages.js").read_text(encoding="utf-8")
 
 PERSIAN = re.compile(r"[\u0600-\u06FF]")
 
@@ -74,28 +73,41 @@ def test_the_bridge_renders_icon_actions_and_luxury_cards():
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
-def test_node_flag_prefers_country_code_to_a_stale_stored_emoji():
-    """Admin node views should show the ISO location, not a stale flag field."""
+def test_served_dashboard_renders_country_flags_from_code_or_location():
+    """The loaded bridge must render actual flags, with a usable emoji fallback."""
+    assert '<script src="/static/js/titan-bridge.js"></script>' in DASHBOARD
+    for css in (".node-flag-visual", ".node-flag-loaded", ".node-flag-failed"):
+        assert css in DASHBOARD, f"the served dashboard is missing {css} flag styling"
     script = r"""
 const fs = require('fs');
-const src = fs.readFileSync(process.env.TITAN_PAGES_JS, 'utf8');
-const start = src.indexOf('function flagFor(cc)');
-const end = src.indexOf('function flagHtml', start);
-if (start < 0 || end < 0) throw new Error('node flag helper not found');
-new Function('globalThis', src.slice(start, end) + '\nglobalThis.resolveNodeFlagEmoji = nodeFlagEmoji;')(globalThis);
+const src = fs.readFileSync(process.env.TITAN_BRIDGE, 'utf8');
+const start = src.indexOf('  function flagFor(cc)');
+const end = src.indexOf('  // Dashboard copy is translated', start);
+if (start < 0 || end < 0) throw new Error('live node flag renderer not found');
+const fakeDocument = { addEventListener() {} };
+const esc = value => String(value == null ? '' : value);
+new Function('document', 'globalThis', 'esc', src.slice(start, end) + ';globalThis.flagHelpers={nodeCountryCode,nodeFlag,nodeFlagHtml};')(fakeDocument, globalThis, esc);
 const cases = [
-  [{ country_code: 'DE', flag: '🇳🇱' }, '🇩🇪'],
-  [{ country_code: '', flag: '🇸🇬' }, '🇸🇬'],
-  [{ country_code: '', flag: '🏳️' }, '🌐'],
+  [{ country_code: 'DE', flag: '🇳🇱' }, 'DE', '🇩🇪'],
+  [{ country: 'Netherlands', city: 'Amsterdam' }, 'NL', '🇳🇱'],
+  [{ city: 'Frankfurt' }, 'DE', '🇩🇪'],
+  [{ country_code: 'UK' }, 'GB', '🇬🇧'],
+  [{ flag: '🇸🇬' }, '', '🇸🇬'],
 ];
-for (const [node, expected] of cases) {
-  const actual = globalThis.resolveNodeFlagEmoji(node);
-  if (actual !== expected) throw new Error(`${JSON.stringify(node)}: expected ${expected}, got ${actual}`);
+for (const [node, expectedCode, expectedFlag] of cases) {
+  const code = globalThis.flagHelpers.nodeCountryCode(node);
+  const flag = globalThis.flagHelpers.nodeFlag(node);
+  if (code !== expectedCode || flag !== expectedFlag) {
+    throw new Error(`${JSON.stringify(node)}: expected ${expectedCode}/${expectedFlag}, got ${code}/${flag}`);
+  }
 }
+const html = globalThis.flagHelpers.nodeFlagHtml({ country: 'Germany' }, 'lg');
+if (!html.includes('https://flagcdn.com/w80/de.png')) throw new Error(`missing country flag image: ${html}`);
+if (!html.includes('🇩🇪') || !html.includes('node-flag-fallback')) throw new Error(`missing fallback flag: ${html}`);
 """
     result = subprocess.run(
         [shutil.which("node"), "-e", script], cwd=str(REPO), capture_output=True, text=True,
-        env={"PATH": "/usr/bin:/bin:/usr/local/bin", "TITAN_PAGES_JS": str(REPO / "static" / "js" / "pages.js")},
+        env={"PATH": "/usr/bin:/bin:/usr/local/bin", "TITAN_BRIDGE": str(REPO / "static/js/titan-bridge.js")},
     )
     assert result.returncode == 0, result.stdout + result.stderr
 

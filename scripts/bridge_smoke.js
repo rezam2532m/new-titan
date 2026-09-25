@@ -152,6 +152,8 @@ const check = (cond, msg) => { if (!cond) failures.push(msg); };
     check(grid.includes(needle), `server cards are missing ${needle}`);
   }
   check(grid.includes('🇩🇪'), 'the node country code did not override its stale stored flag');
+  check(grid.includes('https://flagcdn.com/w80/de.png'), 'the live node card did not render its country flag image');
+  check(grid.includes('node-flag-fallback'), 'the live node card has no emoji fallback when images are unavailable');
   check(!grid.includes('undefined'), 'server cards contain the string "undefined"');
   check(grid.includes(`raw ${RAW_OPEN} ✓`), 'an open raw port is not shown as open');
   check(grid.includes(`raw ${RAW_OPEN} ✕`), 'a closed raw port is not shown as closed');

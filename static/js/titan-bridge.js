@@ -5,13 +5,77 @@
   const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
   function fmtBytes(b){ b=Number(b)||0; if(b===0) return '0 B'; const u=['B','KB','MB','GB','TB']; let i=0; while(b>=1024&&i<u.length-1){b/=1024;i++;} return (i===0?b:b.toFixed(b>=10?1:2).replace(/\.0+$/,''))+' '+u[i]; }
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
-  function flagFor(cc){ cc=(cc||'').toUpperCase().trim(); if(/^[A-Z]{2}$/.test(cc)) return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)); return '🌐'; }
-  function nodeFlag(n){
-    const cc=String((n&&n.country_code)||'').toUpperCase().trim();
-    if(/^[A-Z]{2}$/.test(cc)) return flagFor(cc);
-    const stored=String((n&&n.flag)||'').trim();
-    return stored && stored!=='🏳️' && stored!=='🌐' ? stored : '🌐';
+  function flagFor(cc){ cc=(cc||'').toUpperCase().trim(); if(cc==='UK') cc='GB'; if(/^[A-Z]{2}$/.test(cc)) return String.fromCodePoint(...[...cc].map(c=>0x1F1E6+c.charCodeAt(0)-65)); return '🌐'; }
+  const COUNTRY_CODES=Object.freeze({
+    'argentina':'AR','armenia':'AM','australia':'AU','austria':'AT','azerbaijan':'AZ',
+    'bahrain':'BH','belgium':'BE','brazil':'BR','canada':'CA','chile':'CL','czechia':'CZ',
+    'czech republic':'CZ','denmark':'DK','egypt':'EG','finland':'FI','france':'FR','georgia':'GE',
+    'germany':'DE','hong kong':'HK','india':'IN','iran':'IR','iran, islamic republic of':'IR',
+    'iraq':'IQ','ireland':'IE','israel':'IL','italy':'IT','japan':'JP','jordan':'JO','kuwait':'KW',
+    'lebanon':'LB','netherlands':'NL','the netherlands':'NL','holland':'NL','norway':'NO','oman':'OM',
+    'poland':'PL','qatar':'QA','russia':'RU','russian federation':'RU','saudi arabia':'SA',
+    'singapore':'SG','south africa':'ZA','south korea':'KR','spain':'ES','sweden':'SE',
+    'switzerland':'CH','turkey':'TR','turkiye':'TR','türkiye':'TR','united arab emirates':'AE',
+    'united kingdom':'GB','great britain':'GB','england':'GB','uk':'GB','united states':'US',
+    'united states of america':'US','usa':'US','us':'US','ایالات متحده':'US','آمریکا':'US',
+    'انگلستان':'GB','بریتانیا':'GB','ترکیه':'TR','چک':'CZ','جمهوری چک':'CZ','آلمان':'DE',
+    'هلند':'NL','ایران':'IR','فرانسه':'FR','اسپانیا':'ES','ایتالیا':'IT','سوئیس':'CH',
+    'سوئد':'SE','نروژ':'NO','دانمارک':'DK','فنلاند':'FI','بلژیک':'BE','اتریش':'AT',
+    'لهستان':'PL','سنگاپور':'SG','ژاپن':'JP','هند':'IN','استرالیا':'AU','کانادا':'CA',
+    'امارات':'AE','امارات متحده عربی':'AE','عربستان':'SA','عربستان سعودی':'SA','روسیه':'RU',
+    'گرجستان':'GE','ارمنستان':'AM','آذربایجان':'AZ','مصر':'EG','قطر':'QA','عمان':'OM',
+    'بحرین':'BH','کویت':'KW'
+  });
+  const CITY_CODES=Object.freeze({
+    'frankfurt':'DE','amsterdam':'NL','london':'GB','paris':'FR','madrid':'ES','milan':'IT',
+    'vienna':'AT','warsaw':'PL','prague':'CZ','zurich':'CH','stockholm':'SE','oslo':'NO',
+    'copenhagen':'DK','helsinki':'FI','dublin':'IE','brussels':'BE','istanbul':'TR','dubai':'AE',
+    'doha':'QA','manama':'BH','tel aviv':'IL','jeddah':'SA','riyadh':'SA','ashburn':'US',
+    'ashburn, va':'US','newark':'US','newark, nj':'US','chicago':'US','chicago, il':'US',
+    'dallas':'US','dallas, tx':'US','los angeles':'US','los angeles, ca':'US','san jose':'US',
+    'san jose, ca':'US','seattle':'US','seattle, wa':'US','atlanta':'US','miami':'US','toronto':'CA',
+    'vancouver':'CA','sao paulo':'BR','buenos aires':'AR','santiago':'CL','mumbai':'IN',
+    'chennai':'IN','new delhi':'IN','singapore':'SG','hong kong':'HK','tokyo':'JP','osaka':'JP',
+    'seoul':'KR','sydney':'AU','melbourne':'AU','johannesburg':'ZA','cairo':'EG','moscow':'RU',
+    'tehran':'IR','muscat':'OM','kuwait city':'KW','beirut':'LB','amman':'JO','baghdad':'IQ',
+    'tbilisi':'GE','yerevan':'AM','baku':'AZ'
+  });
+  function locationKey(value){
+    return String(value||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/[._-]+/g,' ').replace(/\s+/g,' ');
   }
+  function nodeCountryCode(n){
+    const raw=String((n&&n.country_code)||'').toUpperCase().trim();
+    if(raw==='UK') return 'GB';
+    if(/^[A-Z]{2}$/.test(raw)) return raw;
+    const country=locationKey((n&&n.country)||raw);
+    if(Object.prototype.hasOwnProperty.call(COUNTRY_CODES,country)) return COUNTRY_CODES[country];
+    const city=locationKey(n&&(n.city||n.location||n.region));
+    return Object.prototype.hasOwnProperty.call(CITY_CODES,city)?CITY_CODES[city]:'';
+  }
+  function nodeFlag(n){
+    const code=nodeCountryCode(n);
+    if(code) return flagFor(code);
+    const stored=String((n&&n.flag)||'').trim();
+    const indicators=[...stored].filter(ch=>ch.codePointAt(0)>=0x1F1E6&&ch.codePointAt(0)<=0x1F1FF);
+    return indicators.length===2 && stored!=='🏳️' ? stored : '🌐';
+  }
+  function nodeFlagHtml(n,size='sm'){
+    const scale=['sm','md','lg'].includes(size)?size:'sm';
+    const emoji=nodeFlag(n), code=nodeCountryCode(n);
+    const fallback=`<span class="node-flag-fallback">${esc(emoji)}</span>`;
+    if(!code) return `<span class="node-flag-visual node-flag-${scale} node-flag-no-code" aria-hidden="true">${fallback}</span>`;
+    const width=scale==='lg'?'w80':'w40';
+    const src=`https://flagcdn.com/${width}/${code.toLowerCase()}.png`;
+    return `<span class="node-flag-visual node-flag-${scale}" aria-hidden="true">${fallback}<img class="node-flag-img" src="${esc(src)}" alt="" loading="lazy"></span>`;
+  }
+  document.addEventListener('load',event=>{
+    const image=event.target;
+    if(image&&image.classList&&image.classList.contains('node-flag-img')) image.parentElement?.classList.add('node-flag-loaded');
+  },true);
+  document.addEventListener('error',event=>{
+    const image=event.target;
+    if(image&&image.classList&&image.classList.contains('node-flag-img')) image.parentElement?.classList.add('node-flag-failed');
+  },true);
 
   // Dashboard copy is translated in place so both the shipped sections and
   // markup inserted later by the live-data bridge stay in the selected language.
@@ -759,7 +823,7 @@
       if(box) box.innerHTML = `<div class="det-card">
         <div class="det-row"><span class="det-ok">✓ نود TiTaN شناسایی شد</span>
           <span class="muted" dir="ltr">v${esc(id.version||'?')} · ${esc(id.role||'node')}</span></div>
-        <div class="det-row"><span>${esc(nodeFlag(id))} ${esc(id.city||'—')}${id.country_code?' · '+esc(id.country_code):''}</span>
+        <div class="det-row"><span>${nodeFlagHtml(id,'sm')} ${esc(id.city||'—')}${(id.country_code||nodeCountryCode(id))?' · '+esc(id.country_code||nodeCountryCode(id)):''}</span>
           <span class="muted" dir="ltr">edge ${esc((id.edge||{}).scheme||'https')} :${esc(String((id.edge||{}).port||''))}</span></div>
         <div class="det-row"><span>${id.credential? 'کلید نود تنظیم شده است ('+esc(id.credential)+')' : 'کلید نود تنظیم نشده'}</span>
           <span class="${id.accepts_bootstrap?'det-ok':'det-bad'}">${id.accepts_bootstrap? 'با زدن «ذخیره» خودکار وصل می‌شود ✓' : 'اگر وصل نشد، متغیرها را ست کن'}</span></div>
@@ -933,10 +997,10 @@
         if(nodes.length){
           srvContent.innerHTML=nodes.slice(0,4).map(n=>{
             const st=n.status||{}; const lat=(st.latency_ms!=null?Number(st.latency_ms):null);
-            const city=(n.city && n.city!=='—')?n.city:n.name; const cc=(n.country_code||'').toUpperCase();
-            const flag=nodeFlag(n); const on=!!(n.enabled!==false && st.online);
+            const city=(n.city && n.city!=='—')?n.city:n.name; const cc=(n.country_code||nodeCountryCode(n)||'').toUpperCase();
+            const on=!!(n.enabled!==false && st.online);
             const pc=!on?'off':(lat==null?'off':(lat<90?'good':(lat<200?'mid':'bad')));
-            return `<div class="server-row" title="${esc(n.name)}"><div class="latency ping ${pc}">${lat!=null?lat+'ms':'—'}<small>تاخیر</small></div><div class="status ${on?'on':'off'}">${on?'آنلاین':'آفلاین'}</div><div class="location"><span class="sr-medal">${esc(flag)}</span><span><span class="sr-name">${esc(n.name)}</span><span class="sr-loc">${esc(city)}${cc?' · '+cc:''}</span></span></div></div>`;
+            return `<div class="server-row" title="${esc(n.name)}"><div class="latency ping ${pc}">${lat!=null?lat+'ms':'—'}<small>تاخیر</small></div><div class="status ${on?'on':'off'}">${on?'آنلاین':'آفلاین'}</div><div class="location"><span class="sr-medal">${nodeFlagHtml(n,'sm')}</span><span><span class="sr-name">${esc(n.name)}</span><span class="sr-loc">${esc(city)}${cc?' · '+cc:''}</span></span></div></div>`;
           }).join('');
         } else srvContent.innerHTML='<div style="color:#8586a8;font-size:11px;padding:12px">سروری ثبت نشده است.</div>';
       }
@@ -962,10 +1026,10 @@
         if(recent.length===0) rcHead.insertAdjacentHTML('beforeend','<div style="padding:14px;color:#8586a8;font-size:11px">کانفیگی وجود ندارد.</div>');
         else recent.forEach(u=>{
           const av=(u.avatar_url||'/static/img/titan-avatar.svg'); const n=nodeMap[u.node_id||1];
-          const flag=n?nodeFlag(n):'🌐'; const loc=n?((n.city && n.city!=='—')?n.city:n.name):'—';
+          const loc=n?((n.city && n.city!=='—')?n.city:n.name):'—';
           const st=u.status||{}; const label=st.expired?'منقضی':(!u.enabled?'غیرفعال':'فعال');
           const row=document.createElement('div'); row.className='recent-table-row';
-          row.innerHTML=`<div class="recent-config"><span class="recent-avatar user-avatar"><img src="${esc(av)}" alt=""></span><span class="recent-name">${esc(u.name)}</span></div><div>${esc((u.protocol||'').toUpperCase())}</div><div class="recent-server"><span class="flag">${esc(flag)}</span><span class="recent-server-name">${esc(loc)}</span></div><div class="recent-status">${esc(label)}</div>`;
+          row.innerHTML=`<div class="recent-config"><span class="recent-avatar user-avatar"><img src="${esc(av)}" alt=""></span><span class="recent-name">${esc(u.name)}</span></div><div>${esc((u.protocol||'').toUpperCase())}</div><div class="recent-server"><span class="flag">${nodeFlagHtml(n,'sm')}</span><span class="recent-server-name">${esc(loc)}</span></div><div class="recent-status">${esc(label)}</div>`;
           rcHead.appendChild(row);
         });
       }
@@ -1391,11 +1455,11 @@
           }
           if(tbody){
             tbody.innerHTML=users.length? users.map(u=>{
-              const n=nodeMap[u.node_id||1]; const loc=n?((n.city&&n.city!=='—')?n.city:n.name):'—'; const flag=n?nodeFlag(n):'🌐';
+              const n=nodeMap[u.node_id||1]; const loc=n?((n.city&&n.city!=='—')?n.city:n.name):'—';
               const st=u.status||{}; const label=st.expired?'منقضی':(!u.enabled?'غیرفعال':'فعال'); const cls=st.expired?'warn':(!u.enabled?'off':'');
               const on = !!u.enabled && !(st.expired);
               const port = (u.main_link||'').split('@')[1] ? (u.main_link||'').split('@')[1].split('/')[0] : '—';
-              return `<tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="${esc(u.avatar_url||'/static/img/titan-avatar.svg')}" alt=""></span>${esc(u.name)}</span></td><td>${esc((u.protocol||'').toUpperCase())} · ${esc((u.transport||'').toUpperCase())}</td><td><span class="node-location-data">${esc(flag)} ${esc(loc)}</span></td><td dir="ltr" class="muted">${esc(port)}</td><td><span class="pill ${cls}">${esc(label)}</span></td><td><div class="row-actions">${icoBtn({"data-uid":u.uid,"data-act":"edit"},"edit","ویرایش کانفیگ","gold")}${icoBtn({"data-uid":u.uid,"data-act":"links"},"link","کپی لینک اتصال","violet")}${icoBtn({"data-uid":u.uid,"data-act":"qr"},"qr","QR code","")}${icoBtn({"data-uid":u.uid,"data-act":"power","data-on":on?1:0},"power",on?"خاموش کردن":"روشن کردن",on?"":"ok")}${icoBtn({"data-uid":u.uid,"data-act":"del"},"trash","حذف","danger")}</div></td></tr>`;
+              return `<tr><td><span class="user-cell"><span class="avatar user-avatar"><img src="${esc(u.avatar_url||'/static/img/titan-avatar.svg')}" alt=""></span>${esc(u.name)}</span></td><td>${esc((u.protocol||'').toUpperCase())} · ${esc((u.transport||'').toUpperCase())}</td><td><span class="node-location-data">${n?nodeFlagHtml(n,'sm'):'🌐'} ${esc(loc)}</span></td><td dir="ltr" class="muted">${esc(port)}</td><td><span class="pill ${cls}">${esc(label)}</span></td><td><div class="row-actions">${icoBtn({"data-uid":u.uid,"data-act":"edit"},"edit","ویرایش کانفیگ","gold")}${icoBtn({"data-uid":u.uid,"data-act":"links"},"link","کپی لینک اتصال","violet")}${icoBtn({"data-uid":u.uid,"data-act":"qr"},"qr","QR code","")}${icoBtn({"data-uid":u.uid,"data-act":"power","data-on":on?1:0},"power",on?"خاموش کردن":"روشن کردن",on?"":"ok")}${icoBtn({"data-uid":u.uid,"data-act":"del"},"trash","حذف","danger")}</div></td></tr>`;
             }).join('') : '<tr><td colspan="6" style="text-align:center;color:#8586a8">کانفیگی وجود ندارد</td></tr>';
             tbody.querySelectorAll('[data-act="del"]').forEach(b=> b.addEventListener('click', async()=>{ const uid=b.dataset.uid; if(!confirm('حذف کانفیگ؟')) return; try{ await apiJson('/api/users/'+uid,{method:'DELETE'}); toast('حذف شد'); refreshConfigs(); loadOverview(); }catch(e){toast(e.message);} }));
             tbody.querySelectorAll('[data-act="links"]').forEach(b=> b.addEventListener('click', async()=>{ const uid=b.dataset.uid; try{ const d=await apiJson('/api/users/'+uid+'/links'); await navigator.clipboard.writeText(d.main_link||d.links[0]); toast('لینک کپی شد'); }catch(e){toast(e.message);} }));
@@ -1473,7 +1537,7 @@
           function nodeCard(n){
             const st=n.status||{}; const on=!!(n.enabled!==false && st.online);
             const lat=(st.latency_ms!=null?Number(st.latency_ms):null);
-            const cc=(n.country_code||'').toUpperCase(); const flag=nodeFlag(n);
+            const cc=(n.country_code||nodeCountryCode(n)||'').toUpperCase();
             const city=(n.city && n.city!=='—')?n.city:'';
             const loc=[city||n.name, cc].filter(Boolean).join(' · ');
             const sync=n.sync||{}; const stale=(sync.ok===true && sync.at && (Date.now()/1000 - sync.at)>900);
@@ -1483,7 +1547,7 @@
                         : (sync.ok===true ? '' : 'وضعیت همگام‌سازی هنوز اندازه‌گیری نشده است.')));
             return `<article class="node-lux ${on?'':'offline'}${n.is_local?' local':''}" data-node="${n.id}">
               <div class="nl-top">
-                <div class="nl-medal"><span class="fe">${esc(flag)}</span></div>
+                <div class="nl-medal">${nodeFlagHtml(n,'lg')}</div>
                 <div style="flex:1;min-width:0">
                   <div class="nl-name"><span class="nl-orb ${on?'':'off'}"></span>${esc(n.name||(dashboardLang==='en'?'Node':'نود'))}</div>
                   <div class="nl-loc">${esc(loc)}</div>
